@@ -14,11 +14,6 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self.__WINDOW_TITLE)
 
         # Central widget (QMainWindow *requires* one)
-        central_widget = QWidget(self)
-        self.setCentralWidget(central_widget)
+        base_view = BaseView()
 
-        # Layout for the central widget
-        layout = QVBoxLayout(central_widget)
-
-        label = QLabel("Hallo Cedric!", self)
-        layout.addWidget(label)
+        self.setCentralWidget(base_view)
