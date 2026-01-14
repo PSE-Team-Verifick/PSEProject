@@ -1,11 +1,13 @@
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from model.data.input_bounds import InputBounds
 from model.data.network_verification_config import NetworkVerificationConfig
 from model.data.neural_network import NeuralNetwork
 from model.data.storage import Storage
 from model.data_loader.neural_network_loader import NeuralNetworkLoader
-from view.network_view.network_view import NetworkView
+
+if TYPE_CHECKING:
+    from view.network_view.network_view import NetworkView
 
 
 class NetworkViewController:
