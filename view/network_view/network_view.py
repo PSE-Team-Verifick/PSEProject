@@ -8,3 +8,6 @@ class NetworkView:
 
     def add_network(self, config: NetworkVerificationConfig):
         pass
+
+    def open_network_file_picker(self) -> str:
+        pass
