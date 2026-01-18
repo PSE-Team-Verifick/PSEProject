@@ -9,4 +9,4 @@ from utils.result import Result
 
 class DiagramConfig:
     results: Dict[PlotGenerationConfig, Result[Figure]] = {}
-    plots: Dict[Plot] = {}
+    plots: Dict[int, Plot] = {}
