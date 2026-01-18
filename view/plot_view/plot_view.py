@@ -15,4 +15,4 @@ class PlotView(InsertView):
         layout = QVBoxLayout()
         self.setLayout(layout)
         layout.addWidget(QLabel("Plot"))
-        dialog = FullscreenPlotDialog(None)
+        # dialog = FullscreenPlotDialog(None)
