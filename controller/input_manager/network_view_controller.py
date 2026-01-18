@@ -6,6 +6,7 @@ from model.data.network_verification_config import NetworkVerificationConfig
 from model.data.neural_network import NeuralNetwork
 from model.data.storage import Storage
 from model.data_loader.neural_network_loader import NeuralNetworkLoader
+from view.dialogs.network_management_dialog import NetworkManagementDialog
 
 if TYPE_CHECKING:
     from view.network_view.network_view import NetworkView
@@ -21,6 +22,11 @@ class NetworkViewController:
 
     def open_network_view(self, network: NeuralNetwork) -> bool:
         pass
+
+    def open_network_management_dialog(self):
+        dialog = NetworkManagementDialog(on_close=self.current_network_view.close_dialog)
+        self.current_network_view.open_dialog(dialog)
+
 
     def load_new_network(self):
         path = self.current_network_view.open_network_file_picker()

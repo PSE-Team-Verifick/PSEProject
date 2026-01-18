@@ -1,7 +1,7 @@
 from typing import List
 from controller.input_manager.network_view_controller import NetworkViewController
 
-from PySide6.QtWidgets import QVBoxLayout, QLabel, QPushButton, QFileDialog
+from PySide6.QtWidgets import QVBoxLayout, QLabel, QPushButton, QFileDialog, QTabWidget, QWidget
 
 from model.data.network_verification_config import NetworkVerificationConfig
 from view.base_view.insert_view import InsertView
@@ -14,16 +14,13 @@ class NetworkView(InsertView):
     def __init__(self):
         super().__init__()
         self.controller = NetworkViewController(self)
+        # self.layout.addWidget(QLabel("Network"))
 
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-        layout.addWidget(QLabel("Network"))
+        self.button = QPushButton("Open Network Dialog", self)
+        self.button.move(100, 80)
+        self.button.clicked.connect(self.controller.open_network_management_dialog)
 
-        button = QPushButton("Load Network", self)
-        button.move(100, 80)
-        button.clicked.connect(self.controller.load_new_network)
-
-        layout.addWidget(button)
+        self.page_layout.addWidget(self.button)
 
     def add_network(self, config: NetworkVerificationConfig):
         pass
