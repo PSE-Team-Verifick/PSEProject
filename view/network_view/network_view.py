@@ -29,5 +29,5 @@ class NetworkView(InsertView):
         pass
 
     def open_network_file_picker(self) -> str:
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open File", ".")
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open File", ".", "ONNX-Files (*.onnx);; All Files (*)")
         return file_path
