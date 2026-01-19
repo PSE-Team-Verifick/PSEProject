@@ -52,7 +52,6 @@ class InsertView(QWidget):
         return True
 
     def resizeEvent(self, event):
-        print("resize event")
         super().resizeEvent(event)
         for dialog in self.__dialog_stack:
             dialog.setGeometry(self.rect())

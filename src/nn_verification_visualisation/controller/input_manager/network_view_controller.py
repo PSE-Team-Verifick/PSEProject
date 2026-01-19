@@ -24,26 +24,36 @@ class NetworkViewController:
         pass
 
     def open_network_management_dialog(self):
-        dialog = NetworkManagementDialog(on_close=self.current_network_view.close_dialog)
+        dialog = NetworkManagementDialog(self)
         self.current_network_view.open_dialog(dialog)
 
-
-    def load_new_network(self):
+    def load_new_network(self) -> NetworkVerificationConfig | None:
         path = self.current_network_view.open_network_file_picker()
         if path is None:
-            return
+            return None
 
         result = NeuralNetworkLoader().load_neural_network(path)
         if not result.is_success:
-            return
+            return None
+
+        network = NetworkVerificationConfig(result.data)
 
         storage = Storage()
-        storage.networks.append(NetworkVerificationConfig(result.data))
+        storage.networks.append(network)
 
-        print("Model was successfully loaded")
-
+        self.current_network_view.add_network_tab(network)
         self.current_tab = len(storage.networks)
 
+        return network
+
+    def remove_neural_network(self, network: NetworkVerificationConfig) -> bool:
+        networks = Storage().networks
+        if network not in networks:
+            return False
+        index = networks.index(network)
+        self.current_network_view.close_network_tab(index)
+        networks.remove(network)
+        return True
 
     def run_samples(self) -> List[int]:
         pass

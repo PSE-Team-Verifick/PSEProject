@@ -2,9 +2,10 @@ from typing import List
 
 from model.data.diagram_config import DiagramConfig
 from model.data.network_verification_config import NetworkVerificationConfig
+from utils.singleton import SingletonMeta
 
 
-class Storage:
+class Storage(metaclass=SingletonMeta):
     networks: List[NetworkVerificationConfig]
     diagrams: List[DiagramConfig]
 
