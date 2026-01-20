@@ -2,10 +2,9 @@ from typing import List
 
 from PySide6.QtWidgets import QWidget
 
-from model.data.diagram_config import DiagramConfig
-from view.plot_view.plot_widget import PlotWidget
-from view.base_view.tab import Tab
-
+from nn_verification_visualisation.model.data.diagram_config import DiagramConfig
+from nn_verification_visualisation.view.plot_view.plot_widget import PlotWidget
+from nn_verification_visualisation.view.base_view.tab import Tab
 
 class PlotPage(Tab):
     configuration: DiagramConfig

@@ -1,7 +1,7 @@
 from typing import List
 
-from model.data.algorithm import Algorithm
-from model.data.network_verification_config import NetworkVerificationConfig
+from nn_verification_visualisation.model.data.algorithm import Algorithm
+from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
 
 
 class PlotGenerationConfig:

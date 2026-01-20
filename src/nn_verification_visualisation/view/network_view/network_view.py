@@ -1,12 +1,13 @@
 from typing import List
-from controller.input_manager.network_view_controller import NetworkViewController
 
 from PySide6.QtWidgets import QPushButton, QFileDialog
 
-from model.data.network_verification_config import NetworkVerificationConfig
-from model.data.storage import Storage
-from view.base_view.insert_view import InsertView
-from view.network_view.network_page import NetworkPage
+from nn_verification_visualisation.controller.input_manager.network_view_controller import NetworkViewController
+
+from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
+from nn_verification_visualisation.model.data.storage import Storage
+from nn_verification_visualisation.view.base_view.insert_view import InsertView
+from nn_verification_visualisation.view.network_view.network_page import NetworkPage
 
 class NetworkView(InsertView):
     # pages: List[NetworkWidget]

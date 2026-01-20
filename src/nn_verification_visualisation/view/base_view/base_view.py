@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QStackedWidget, QStackedLayout
 
-from view.base_view.insert_view import InsertView
-from view.network_view.network_view import NetworkView
-from view.plot_view.plot_view import PlotView
+from nn_verification_visualisation.view.base_view.insert_view import InsertView
+from nn_verification_visualisation.view.network_view.network_view import NetworkView
+from nn_verification_visualisation.view.plot_view.plot_view import PlotView
 
 
 class BaseView(QWidget):

@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
 
-from model.data.network_verification_config import NetworkVerificationConfig
-from model.data.storage import Storage
-from view.dialogs.list_dialog_base import ListDialogBase, T
+from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
+from nn_verification_visualisation.model.data.storage import Storage
+from nn_verification_visualisation.view.dialogs.list_dialog_base import ListDialogBase, T
 
 if TYPE_CHECKING:
-    from controller.input_manager.network_view_controller import NetworkViewController
+    from nn_verification_visualisation.controller.input_manager.network_view_controller import NetworkViewController
 
 class NetworkManagementDialog(ListDialogBase[NetworkVerificationConfig]):
     controller: NetworkViewController

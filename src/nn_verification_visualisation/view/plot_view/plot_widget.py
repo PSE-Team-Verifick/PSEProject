@@ -1,6 +1,6 @@
 from typing import Callable
 
-from model.data.plot import Plot
+from nn_verification_visualisation.model.data.plot import Plot
 from PySide6.QtWidgets import QWidget
 
 class PlotWidget(QWidget):

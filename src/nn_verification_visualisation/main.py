@@ -5,7 +5,7 @@ from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
 
-from view.base_view.main_window import MainWindow
+from nn_verification_visualisation.view.base_view.main_window import MainWindow
 
 def main():
     app = QApplication(sys.argv)

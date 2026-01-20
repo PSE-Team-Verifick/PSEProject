@@ -1,8 +1,8 @@
 from typing import List
 
-from model.data.diagram_config import DiagramConfig
-from model.data.network_verification_config import NetworkVerificationConfig
-from utils.singleton import SingletonMeta
+from nn_verification_visualisation.model.data.diagram_config import DiagramConfig
+from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
+from nn_verification_visualisation.utils.singleton import SingletonMeta
 
 
 class Storage(metaclass=SingletonMeta):
