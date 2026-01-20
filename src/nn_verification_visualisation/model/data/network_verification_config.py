@@ -1,7 +1,7 @@
 from typing import List
 
-from model.data.input_bounds import InputBounds
-from model.data.neural_network import NeuralNetwork
+from nn_verification_visualisation.model.data.input_bounds import InputBounds
+from nn_verification_visualisation.model.data.neural_network import NeuralNetwork
 
 
 class NetworkVerificationConfig:

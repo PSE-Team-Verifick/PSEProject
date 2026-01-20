@@ -1,7 +1,6 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel
 
-from utils.singleton import SingletonMeta
-from view.base_view.base_view import BaseView
+from nn_verification_visualisation.view.base_view.base_view import BaseView
 
 
 class MainWindow(QMainWindow):

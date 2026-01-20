@@ -2,8 +2,8 @@ from typing import List, Callable
 
 from PySide6.QtWidgets import QWidget
 
-from model.data.plot_generation_config import PlotGenerationConfig
-from view.dialogs.dialog_base import DialogBase
+from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
+from nn_verification_visualisation.view.dialogs.dialog_base import DialogBase
 
 class NeuronPicker(DialogBase):
     current_network: str

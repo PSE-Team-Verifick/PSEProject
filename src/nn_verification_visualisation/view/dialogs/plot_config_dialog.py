@@ -1,12 +1,11 @@
 from typing import TYPE_CHECKING
 
-from view.dialogs.neuron_picker import NeuronPicker
+from nn_verification_visualisation.view.dialogs.neuron_picker import NeuronPicker
+from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
+from nn_verification_visualisation.view.dialogs.list_dialog_base import ListDialogBase
 
 if TYPE_CHECKING:
-    from controller.input_manager.plot_view_controller import PlotViewController
-
-from model.data.plot_generation_config import PlotGenerationConfig
-from view.dialogs.list_dialog_base import ListDialogBase, T
+    from nn_verification_visualisation.controller.input_manager.plot_view_controller import PlotViewController
 
 class PlotConfigDialog(ListDialogBase[PlotGenerationConfig]):
     parent_controller: PlotViewController

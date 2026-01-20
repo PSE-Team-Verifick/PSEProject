@@ -2,9 +2,9 @@ from typing import List
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedLayout
 
-from view.base_view.action_menu import ActionMenu
-from view.base_view.tabs import Tabs
-from view.dialogs.dialog_base import DialogBase
+from nn_verification_visualisation.view.base_view.action_menu import ActionMenu
+from nn_verification_visualisation.view.base_view.tabs import Tabs
+from nn_verification_visualisation.view.dialogs.dialog_base import DialogBase
 
 class InsertView(QWidget):
     tabs: Tabs

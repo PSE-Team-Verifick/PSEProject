@@ -1,7 +1,7 @@
 from typing import List, Dict
 
-from model.data.diagram_config import DiagramConfig
-from model.data.network_verification_config import NetworkVerificationConfig
+from nn_verification_visualisation.model.data.diagram_config import DiagramConfig
+from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
 
 class SaveState:
     loaded_networks: List[NetworkVerificationConfig]

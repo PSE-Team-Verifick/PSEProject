@@ -1,7 +1,7 @@
 from typing import List
 
-from utils.singleton import SingletonMeta
-from view.dialogs.info_popup import InfoPopup
+from nn_verification_visualisation.utils.singleton import SingletonMeta
+from nn_verification_visualisation.view.dialogs.info_popup import InfoPopup
 
 class InfoPopupQueue(metaclass=SingletonMeta):
     dialogs: List[InfoPopup]

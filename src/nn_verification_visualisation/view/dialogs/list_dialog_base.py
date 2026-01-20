@@ -1,7 +1,7 @@
 from typing import Generic, TypeVar, List, Callable
 
 from PySide6.QtWidgets import QWidget, QListWidget, QVBoxLayout, QHBoxLayout, QPushButton
-from view.dialogs.dialog_base import DialogBase
+from nn_verification_visualisation.view.dialogs.dialog_base import DialogBase
 
 T = TypeVar('T')
 
