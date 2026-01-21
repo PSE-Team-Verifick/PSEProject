@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List, Iterable
 
 from utils.result import Result, Failure, Success
 from utils.singleton import SingletonMeta
@@ -57,22 +57,38 @@ class InputBoundsLoader(metaclass=SingletonMeta):
             return Failure(ValueError(
                 f"{file_path} has {str(len(rows))} rows. It needs the same number of inputs as the network ({input_count})"))
 
-        indices = []
+        bounds : Dict[int, tuple[float, float]] = {}
+        enumeration : List[tuple[int, List[str]]] = []
         # allow custom ordering of bounds
         if field_count == 3:
-            for row in rows:
-                indices.append(int(row[0]))
-                del row[0]
+            parsed_rows = []
+            for i, row in enumerate(rows):
+                try:
+                    position = int(row[0])
+                except ValueError:
+                    return Failure(ValueError(f"Index at row {i + 2} is not an integer."))
 
-            # check that all indices are covered exactly once
-            if not sorted(indices) == list(range(len(rows))):
-                return Failure(ValueError("Every index in the csv file has to appear exactly once."))
+                parsed_rows.append((position, row[1:]))
+
+            indices = [p[0] for p in parsed_rows]
+            if sorted(indices) != list(range(input_count)):
+                return Failure(
+                    ValueError("Every index in the csv file has to appear exactly once and be in range 0..N-1."))
+            enumeration = parsed_rows
         else:
-            indices = list(range(len(rows)))
+            enumeration = [(i, row) for i, row in enumerate(rows)]
 
-        bounds = {
-            i: (float(rows[i][0]), float(rows[i][1])) for i in indices
-        }
+        for i, row in enumeration:
+            try:
+                lower_bound, upper_bound = (float(row[0]), float(row[1]))
+            except ValueError:
+                return Failure(ValueError(f"Value {i} is not an integer."))
+
+            if lower_bound > upper_bound:
+                return Failure(ValueError(f"Lower bound {lower_bound} is greater than upper bound {upper_bound} for item {i}"))
+
+            bounds[i] = (lower_bound, upper_bound)
+
         input_bounds = InputBounds(bounds)
 
         return Success(input_bounds)
