@@ -25,6 +25,8 @@ class InputBoundsLoader(metaclass=SingletonMeta):
                 return self.__parse_csv(file_path, input_count)
             except BaseException as e:
                 return Failure(e)
+        elif is_vnnlib:
+            pass
 
     def __get_input_count(self, network: NeuralNetwork) -> int:
         return 0
@@ -46,12 +48,13 @@ class InputBoundsLoader(metaclass=SingletonMeta):
 
         field_count = len(header)
 
-        # checking whether the field count is valid and matches the format of the rows
+        # checking whether the field count is valid
         if field_count not in (2, 3):
             return Failure(ValueError(file_path + 'needs to be consistently organized in two or three columns.'))
 
+        # checking whether the fields match the format of the rows
         if any([len(row) != field_count for row in rows]):
-            return Failure(ValueError(file_path + "must have {field_count} columns in every row."))
+            return Failure(ValueError(f"{file_path} must have {field_count} columns in every row."))
 
         if len(rows) != input_count:
             return Failure(ValueError(
