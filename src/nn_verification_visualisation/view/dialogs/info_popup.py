@@ -2,8 +2,8 @@ from typing import List
 
 from PySide6.QtWidgets import QWidget
 
-from view.dialogs.dialog_base import DialogBase
-from view.dialogs.info_type import InfoType
+from nn_verification_visualisation.view.dialogs.dialog_base import DialogBase
+from nn_verification_visualisation.view.dialogs.info_type import InfoType
 
 class InfoPopup(DialogBase):
     text: str

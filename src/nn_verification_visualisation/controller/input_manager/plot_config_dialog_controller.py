@@ -1,7 +1,7 @@
 from typing import List
 
-from model.data.plot_generation_config import PlotGenerationConfig
-from view.dialogs.plot_config_dialog import PlotConfigDialog
+from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
+from nn_verification_visualisation.view.dialogs.plot_config_dialog import PlotConfigDialog
 
 class PlotConfigDialogController:
     current_plot_config_dialog: PlotConfigDialog

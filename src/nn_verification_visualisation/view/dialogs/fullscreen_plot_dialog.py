@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QVBoxLayout
 
-from view.dialogs.dialog_base import DialogBase
-from model.data.plot import Plot
+from nn_verification_visualisation.view.dialogs.dialog_base import DialogBase
+from nn_verification_visualisation.model.data.plot import Plot
 
 class FullscreenPlotDialog(DialogBase):
     plot: Plot

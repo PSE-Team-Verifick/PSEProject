@@ -1,6 +1,9 @@
 from typing import List, Callable
 
-from view.dialogs.dialog_base import DialogBase
+from PySide6.QtWidgets import QWidget
+
+from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
+from nn_verification_visualisation.view.dialogs.dialog_base import DialogBase
 
 class NeuronPicker(DialogBase):
     current_network: str
@@ -10,10 +13,16 @@ class NeuronPicker(DialogBase):
     parameters: List[str]
 
     def __init__(self, on_close: Callable[[], None]):
-        super().__init__(on_close)
+        super().__init__(on_close, "Neuron Picker")
         self.current_neurons = []
         self.furthest_pairs = []
         self.parameters = []
 
     def update_algorithms(self):
+        pass
+
+    def get_content(self) -> QWidget:
+        return QWidget()
+
+    def get_current_config(self) -> PlotGenerationConfig:
         pass

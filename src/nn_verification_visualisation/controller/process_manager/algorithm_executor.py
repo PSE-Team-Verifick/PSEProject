@@ -1,4 +1,4 @@
-from model.data.plot_generation_config import PlotGenerationConfig
+from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
 
 
 class AlgorithmExecutor:

@@ -2,9 +2,9 @@ from typing import Dict
 
 from matplotlib.figure import Figure
 
-from model.data.plot_generation_config import PlotGenerationConfig
-from model.data.plot import Plot
-from utils.result import Result
+from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
+from nn_verification_visualisation.model.data.plot import Plot
+from nn_verification_visualisation.utils.result import Result
 
 
 class DiagramConfig:

@@ -2,8 +2,8 @@ from typing import List
 
 from PySide6.QtWidgets import QGraphicsView, QGraphicsLineItem
 
-from model.data.network_verification_config import NetworkVerificationConfig
-from view.network_view.network_node import NetworkNode
+from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
+from nn_verification_visualisation.view.network_view.network_node import NetworkNode
 
 
 class NetworkWidget(QGraphicsView):

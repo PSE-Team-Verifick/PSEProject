@@ -1,7 +1,7 @@
 from typing import List
 
 from PySide6.QtWidgets import QWidget, QTabWidget, QVBoxLayout
-from view.base_view.tab import Tab
+from nn_verification_visualisation.view.base_view.tab import Tab
 
 class Tabs(QTabWidget):
     def __init__(self, tabs_closable: bool = False):

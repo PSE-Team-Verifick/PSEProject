@@ -2,8 +2,8 @@ from typing import List
 
 from PySide6.QtWidgets import QWidget
 
-from model.data.plot import Plot
-from view.plot_view.pair_loading_widget import PairLoadingWidget
+from nn_verification_visualisation.model.data.plot import Plot
+from nn_verification_visualisation.view.plot_view.pair_loading_widget import PairLoadingWidget
 
 
 class ComparisonLoadingWidget(QWidget):

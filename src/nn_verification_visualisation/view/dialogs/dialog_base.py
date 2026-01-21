@@ -23,7 +23,7 @@ class DialogBase(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)  # important!
 
         self.dialog = QWidget()
-        self.dialog.setStyleSheet("background-color: #333; border-radius: 10px;")
+        self.dialog.setStyleSheet("background-color: #888; border-radius: 10px;")
 
         outer_layout = QVBoxLayout()
         outer_layout.addWidget(self.dialog, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -37,7 +37,6 @@ class DialogBase(QWidget):
         if size is not None:
             self.dialog.setFixedWidth(size[0])
             self.dialog.setFixedHeight(size[1])
-
 
     def get_title_bar(self) -> QWidget:
         bar = QWidget()

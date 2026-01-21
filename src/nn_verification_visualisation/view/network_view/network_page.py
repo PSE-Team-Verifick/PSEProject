@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QWidget, QLabel
 
-from model.data.network_verification_config import NetworkVerificationConfig
-from view.base_view.tab import Tab
-from view.network_view.network_widget import NetworkWidget
+from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
+from nn_verification_visualisation.view.base_view.tab import Tab
+from nn_verification_visualisation.view.network_view.network_widget import NetworkWidget
 
 class NetworkPage(Tab):
     configuration: NetworkVerificationConfig

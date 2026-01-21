@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import List, TYPE_CHECKING
 
-from model.data.input_bounds import InputBounds
-from model.data.network_verification_config import NetworkVerificationConfig
-from model.data.neural_network import NeuralNetwork
-from model.data.storage import Storage
-from model.data_loader.neural_network_loader import NeuralNetworkLoader
-from view.dialogs.network_management_dialog import NetworkManagementDialog
+from nn_verification_visualisation.model.data.input_bounds import InputBounds
+from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
+from nn_verification_visualisation.model.data.neural_network import NeuralNetwork
+from nn_verification_visualisation.model.data.storage import Storage
+from nn_verification_visualisation.model.data_loader.neural_network_loader import NeuralNetworkLoader
+from nn_verification_visualisation.view.dialogs.network_management_dialog import NetworkManagementDialog
 
 if TYPE_CHECKING:
-    from view.network_view.network_view import NetworkView
+    from nn_verification_visualisation.view.network_view.network_view import NetworkView
 
 
 class NetworkViewController:
