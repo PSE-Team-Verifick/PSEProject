@@ -48,10 +48,17 @@ QAbstractButton:hover {
     background-color: rgba(0, 0, 0, 150);
 }
 
-#dialog-pane {
-    background-color: #fff;
+#dialog-pane, #card {
+    background-color: @bg0;
     border-radius: 15px;
 }
+
+#plot-card {
+    background-color: @bg1;
+    color : red;
+    border-radius: 15px;
+}
+
 
 #header-info {
     background-color: @bg2;
@@ -82,12 +89,12 @@ QAbstractButton:hover {
     font-weight: bold;
 }
 
-#subtitle {
+#subtitle, #card::title{
     font-size: 16px;
     font-weight: bold;
 }
 
-QLabel,  #label, #popup-content {
+QLabel, #label, #popup-content {
     font-size: 14px;
 }
 
@@ -98,6 +105,22 @@ QLabel,  #label, #popup-content {
 #background-button {
     color: @bgt;
     background-color: @bg2;
+}
+
+#transparent-button {
+    color: @bgt;
+    background-color: transparent;
+}
+
+QCheckBox {
+    spacing: 1px;
+}
+
+QCheckBox::indicator, QCheckBox::title {
+    border: 2px solid @bgt;
+    padding: 0;
+    margin: 0;
+    border-radius: 3px;
 }
 
 #background-button:hover {
