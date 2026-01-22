@@ -83,16 +83,19 @@ class PlotPage(Tab):
         layout.setSpacing(8)
 
         title = QLabel("Settings")
-        title.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        title.setObjectName("title")
         layout.addWidget(title)
 
         for diagram_index in range(1, 5):
             group = QGroupBox(f"Diagram {diagram_index:02d}")
+            group.setObjectName("card")
             group_layout = QVBoxLayout(group)
-            group_layout.setContentsMargins(6, 6, 6, 6)
-            group_layout.setSpacing(4)
+            group_layout.setContentsMargins(6, 20, 6, 6)
+            group_layout.setSpacing(0)
             for pair_index in range(1, 4):
-                group_layout.addWidget(QCheckBox(f"Node Pair {pair_index}"))
+                check_box = QCheckBox(f"Node Pair {pair_index}")
+                check_box.setObjectName("transparent-button")
+                group_layout.addWidget(check_box)
             layout.addWidget(group)
 
         scale_group = QGroupBox("Shared Scale")

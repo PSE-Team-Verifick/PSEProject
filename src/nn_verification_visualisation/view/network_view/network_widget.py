@@ -1,9 +1,8 @@
 import random
 from typing import List, Callable
 
-from PySide6.QtGui import QColor, QPainter, QPen, QWheelEvent, QKeyEvent, QTransform
-from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import QGraphicsView, QGraphicsLineItem, QGraphicsScene
+from PySide6.QtGui import QColor, QPainter, QPen, QWheelEvent, QKeyEvent, QTransform, QPalette
+from PySide6.QtWidgets import QGraphicsView, QGraphicsScene
 from PySide6.QtCore import Qt, QVariantAnimation, QEasingCurve, QParallelAnimationGroup
 
 from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
@@ -15,11 +14,10 @@ class NetworkWidget(QGraphicsView):
     configuration: NetworkVerificationConfig
     node_layers: List[List[NetworkNode]]
     scene: QGraphicsScene
+    background_color: QColor
 
     nodes_selectable: bool
     on_selection_changed: Callable[[List[NetworkNode]], None]
-
-    background_color: QColor = QColor("#F0F0F0")
 
     height_to_width_ration: float = 1.0
     node_spacing = 90
@@ -31,6 +29,7 @@ class NetworkWidget(QGraphicsView):
 
     def __init__(self, configuration: NetworkVerificationConfig, nodes_selectable: bool = False, on_selection_changed: Callable[[List[NetworkNode]], None] = None):
         super().__init__()
+        self.background_color = self.palette().color(QPalette.Base)
         self.configuration = configuration
 
         self.scene = QGraphicsScene(self)
