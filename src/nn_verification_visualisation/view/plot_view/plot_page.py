@@ -1,6 +1,6 @@
 from typing import List
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QEvent
 from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -13,6 +13,8 @@ from PySide6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSizePolicy,
+    QSlider,
+    QSpacerItem,
     QVBoxLayout,
     QWidget,
 )
@@ -32,11 +34,18 @@ class PlotPage(Tab):
     locked: List[PlotWidget]
     __plot_grid: QGridLayout
     __plot_map: dict[str, PlotWidget]
-    __scale_list: QListWidget
     __syncing: bool
+    __card_size: int
+    __scroll_area: QScrollArea | None
+    __grid_host: QWidget | None
+    __bottom_spacer_height: int
 
     def __init__(self, configuration: DiagramConfig):
         self.__syncing = False
+        self.__card_size = 420
+        self.__scroll_area = None
+        self.__grid_host = None
+        self.__bottom_spacer_height = 32
         super().__init__("Example Tab")
         # configuration is currently not implemented
         # self.configuration = configuration
@@ -50,11 +59,16 @@ class PlotPage(Tab):
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        scroll_area.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        self.__scroll_area = scroll_area
 
         grid_host = QWidget()
+        grid_host.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
         self.__plot_grid = QGridLayout(grid_host)
         self.__plot_grid.setContentsMargins(4, 4, 4, 4)
         self.__plot_grid.setSpacing(12)
+        self.__plot_grid.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self.__grid_host = grid_host
 
         # Placeholder plot cards (2x2 grid).
         self.plots = []
@@ -64,15 +78,12 @@ class PlotPage(Tab):
             plot_card = self.__create_plot_card(title)
             self.plots.append(plot_card)
             self.__plot_map[title] = plot_card
-            row = i // 2
-            col = i % 2
-            self.__plot_grid.addWidget(plot_card, row, col)
-
-        self.__plot_grid.setColumnStretch(0, 1)
-        self.__plot_grid.setColumnStretch(1, 1)
 
         scroll_area.setWidget(grid_host)
         layout.addWidget(scroll_area)
+
+        scroll_area.viewport().installEventFilter(self)
+        self.__relayout_plots()
 
         return container
 
@@ -98,18 +109,19 @@ class PlotPage(Tab):
                 group_layout.addWidget(check_box)
             layout.addWidget(group)
 
-        scale_group = QGroupBox("Shared Scale")
-        scale_layout = QVBoxLayout(scale_group)
-        scale_layout.setContentsMargins(6, 6, 6, 6)
-        scale_layout.setSpacing(4)
-        self.__scale_list = QListWidget()
-        self.__scale_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
-        self.__scale_list.addItems(["Diagram 01", "Diagram 02", "Diagram 03", "Diagram 04"])
-        scale_layout.addWidget(self.__scale_list)
-        apply_scale_button = QPushButton("Apply Shared Scale")
-        apply_scale_button.clicked.connect(self.__apply_shared_scale)
-        scale_layout.addWidget(apply_scale_button)
-        layout.addWidget(scale_group)
+        size_group = QGroupBox("Card Size")
+        size_layout = QVBoxLayout(size_group)
+        size_layout.setContentsMargins(6, 6, 6, 6)
+        size_layout.setSpacing(4)
+        # Temporary: will be replaced by persistent settings.
+        size_slider = QSlider(Qt.Orientation.Horizontal)
+        size_slider.setMinimum(320)
+        size_slider.setMaximum(560)
+        size_slider.setValue(self.__card_size)
+        size_slider.setSingleStep(10)
+        size_slider.valueChanged.connect(self.__on_card_size_changed)
+        size_layout.addWidget(size_slider)
+        layout.addWidget(size_group)
 
         node_pairs_group = QGroupBox("Node Pairs")
         node_pairs_layout = QVBoxLayout(node_pairs_group)
@@ -166,13 +178,14 @@ class PlotPage(Tab):
 
     def __create_plot_card(self, title: str) -> PlotWidget:
         card = PlotWidget()
+        card.setFixedSize(self.__card_size, self.__card_size)
+        card.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(8, 8, 8, 8)
         card_layout.setSpacing(6)
 
         plot_placeholder = QFrame()
         plot_placeholder.setFrameShape(QFrame.Shape.StyledPanel)
-        plot_placeholder.setMinimumSize(520, 360)
         plot_placeholder.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         plot_layout = QVBoxLayout(plot_placeholder)
         plot_layout.setContentsMargins(4, 4, 4, 4)
@@ -221,6 +234,7 @@ class PlotPage(Tab):
         card_layout.addWidget(plot_placeholder)
 
         footer = QWidget()
+        footer.setFixedHeight(40)
         footer_layout = QHBoxLayout(footer)
         footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.setSpacing(6)
@@ -240,43 +254,52 @@ class PlotPage(Tab):
         card_layout.addWidget(footer)
         return card
 
+    def __relayout_plots(self):
+        if self.__scroll_area is None:
+            return
+        viewport_width = self.__scroll_area.viewport().width()
+        margins = self.__plot_grid.contentsMargins()
+        spacing = self.__plot_grid.horizontalSpacing()
+        available_width = viewport_width - margins.left() - margins.right()
+        if available_width <= 0:
+            return
+        if spacing < 0:
+            spacing = 0
+        columns = max(1, (available_width + spacing) // (self.__card_size + spacing))
+        required_width = (
+            columns * self.__card_size
+            + max(0, columns - 1) * spacing
+            + margins.left()
+            + margins.right()
+        )
+
+        while self.__plot_grid.count():
+            item = self.__plot_grid.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.setParent(self.__grid_host)
+
+        if self.__grid_host is not None:
+            self.__grid_host.setFixedWidth(required_width)
+
+        for index, widget in enumerate(self.plots):
+            row = index // columns
+            col = index % columns
+            self.__plot_grid.addWidget(widget, row, col)
+
+        spacer_row = (len(self.plots) + columns - 1) // columns
+        spacer = QSpacerItem(0, self.__bottom_spacer_height, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        self.__plot_grid.addItem(spacer, spacer_row, 0, 1, columns)
+
     def __toggle_lock(self, widget: PlotWidget, button: QPushButton):
         widget.locked = not getattr(widget, "locked", False)
         button.setText("Unlock" if widget.locked else "Lock")
 
-    def __apply_shared_scale(self):
-        selected_titles = [item.text() for item in self.__scale_list.selectedItems()]
-        if selected_titles:
-            widgets = [self.__plot_map[title] for title in selected_titles if title in self.__plot_map]
-        else:
-            widgets = list(self.plots)
-
-        axes_list = [w.axes for w in widgets if getattr(w, "axes", None) is not None]
-        if not axes_list:
-            return
-
-        xmins, xmaxs, ymins, ymaxs = [], [], [], []
-        for ax in axes_list:
-            xlim = ax.get_xlim()
-            ylim = ax.get_ylim()
-            xmins.append(xlim[0])
-            xmaxs.append(xlim[1])
-            ymins.append(ylim[0])
-            ymaxs.append(ylim[1])
-
-        shared_xlim = (min(xmins), max(xmaxs))
-        shared_ylim = (min(ymins), max(ymaxs))
-
-        self.__syncing = True
-        for widget in widgets:
-            ax = widget.axes
-            canvas = widget.canvas
-            if ax is None or canvas is None:
-                continue
-            ax.set_xlim(shared_xlim)
-            ax.set_ylim(shared_ylim)
-            canvas.draw_idle()
-        self.__syncing = False
+    def __on_card_size_changed(self, value: int):
+        self.__card_size = value
+        for widget in self.plots:
+            widget.setFixedSize(self.__card_size, self.__card_size)
+        self.__relayout_plots()
 
     def __on_limits_changed(self, source: PlotWidget):
         if self.__syncing or not getattr(source, "locked", False):
@@ -299,3 +322,8 @@ class PlotPage(Tab):
             target_ax.set_ylim(ylim)
             target_canvas.draw_idle()
         self.__syncing = False
+
+    def eventFilter(self, watched, event):
+        if watched is self.__scroll_area.viewport() and event.type() == QEvent.Type.Resize:
+            self.__relayout_plots()
+        return super().eventFilter(watched, event)
