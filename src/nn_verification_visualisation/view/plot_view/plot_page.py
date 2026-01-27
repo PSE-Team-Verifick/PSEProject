@@ -168,10 +168,14 @@ class PlotPage(Tab):
         edit_button = QPushButton("Edit Comparison")
         layout.addWidget(edit_button, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        # Temporary: bounds playground entry point (remove after validation).
+        add_diagram_button = QPushButton("Add Diagram")
+        add_diagram_button.clicked.connect(self.__add_diagram_from_current_bounds)
+        layout.addWidget(add_diagram_button, alignment=Qt.AlignmentFlag.AlignLeft)
+
         temp_button = QPushButton("Bounds Playground")
         temp_button.clicked.connect(self.__open_temp_bounds_dialog)
         layout.addWidget(temp_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        # Temporary: bounds playground entry point (remove after validation).
 
         return container
 
@@ -440,6 +444,16 @@ class PlotPage(Tab):
             ax.legend(legend_handles, legend_labels, loc="upper right", fontsize=7, frameon=True)
         plot.canvas.draw_idle()
 
+    def __add_diagram_from_current_bounds(self):
+        title = f"Diagram {len(self.plots) + 1:02d}"
+        plot_card = self.__create_plot_card(title)
+        self.plots.append(plot_card)
+        self.__plot_map[title] = plot_card
+        self.__diagram_selections[title] = set()
+        self.__render_plot(plot_card)
+        self.__rebuild_diagram_groups()
+        self.__relayout_plots()
+
     def __compute_polygon(
         self, bounds: list[tuple[tuple[float, float], tuple[float, float]]]
     ) -> list[tuple[float, float]]:
@@ -580,24 +594,6 @@ class PlotPage(Tab):
         generate_button = QPushButton("Generate & Plot")
         generate_button.clicked.connect(generate_and_plot)
         button_layout.addWidget(generate_button)
-        # Temporary: create another diagram from the current bounds.
-        add_button = QPushButton("Add Diagram")
-        def add_diagram():
-            new_bounds = generate_bounds()
-            update_bounds_view(new_bounds)
-            latest_bounds.clear()
-            latest_bounds.extend(new_bounds)
-            pair_index = self.__register_node_pair(new_bounds)
-            title = f"Diagram {len(self.plots) + 1:02d}"
-            plot_card = self.__create_plot_card(title)
-            self.plots.append(plot_card)
-            self.__plot_map[title] = plot_card
-            self.__diagram_selections[title] = {pair_index}
-            self.__render_plot(plot_card)
-            self.__rebuild_diagram_groups()
-            self.__relayout_plots()
-        add_button.clicked.connect(add_diagram)
-        button_layout.addWidget(add_button)
         # Temporary: overlay current bounds on the primary diagram.
         overlay_button = QPushButton("Add Pair")
         def add_overlay():
