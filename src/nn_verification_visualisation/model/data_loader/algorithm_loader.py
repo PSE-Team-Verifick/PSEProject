@@ -79,7 +79,6 @@ class AlgorithmLoader(metaclass=SingletonMeta):
 
         module = importlib.util.module_from_spec(spec)
 
-        # чтобы алгоритм мог импортировать соседние файлы из своей папки
         module_dir = str(path.parent.resolve())
         sys.path.insert(0, module_dir)
         try:
