@@ -24,9 +24,10 @@ class NeuronPicker(DialogBase):
     network_widget: NetworkWidget = None
     node_spin_boxes: List[Tuple[QSpinBox, QSpinBox]]
     network_presentation: QVBoxLayout
+    algorithm_selector: QComboBox
+
 
     def __init__(self, on_close: Callable[[], None], num_neurons: int = 2):
-        # Initialize list/state variables here, not at class level
         self.num_neurons = num_neurons
         self.current_network = 0
         self.current_algorithm = ""
@@ -35,10 +36,28 @@ class NeuronPicker(DialogBase):
         self.max_neuron_num_per_layer = []
         self.parameters = []
 
+        self.algorithm_selector = QComboBox()
+        self.algorithm_selector.currentIndexChanged.connect(
+            self.__on_change_algorithm
+        )
+
+        # Update the algorithm list on change
+        Storage().algorithm_change_listeners.append(self.update_algorithms)
+
         super().__init__(on_close, "Neuron Picker")
 
     def update_algorithms(self):
-        pass
+        index = self.algorithm_selector.currentIndex() if self.algorithm_selector.currentIndex() > -1 else 0
+        self.algorithm_selector.blockSignals(True)
+
+        self.algorithm_selector.clear()
+
+        for algorithm in Storage().algorithms:
+            self.algorithm_selector.addItem(algorithm.name)
+
+        self.algorithm_selector.setCurrentIndex(index)
+
+        self.algorithm_selector.blockSignals(False)
 
     def get_content(self) -> QWidget:
         network_picker_layout = QVBoxLayout()
@@ -97,7 +116,7 @@ class NeuronPicker(DialogBase):
         return widget
 
     def construct_config(self) -> PlotGenerationConfig:
-        if len(Storage().networks) < self.current_network - 1:
+        if len(Storage().networks) < self.current_network - 1 or len(Storage().networks) == 0 or self.current_algorithm == "":
             return None
         network = Storage().networks[self.current_network]
         matching_algorithms = [alg for alg in Storage().algorithms if alg.name == self.current_algorithm]
@@ -122,10 +141,7 @@ class NeuronPicker(DialogBase):
         self.max_neuron_num_per_layer = new_network.layers_dimensions
 
         # Update Layer Spinbox Ranges
-        # Note: layers_dimensions includes Input and Output.
-        # Range is 0 to len-1.
         layer_count = len(new_network.layers_dimensions)
-
         for (layer_spin, neuron_spin) in self.node_spin_boxes:
             # Block signals to prevent triggering logic while setting up
             layer_spin.blockSignals(True)
@@ -199,11 +215,8 @@ class NeuronPicker(DialogBase):
         # --- Algorithm Selector ---
         algorithm_group = QHBoxLayout()
         algorithm_group.addWidget(QLabel("Algorithm:"))
-        algorithm_selector = QComboBox()
-        for algorithm in Storage().algorithms:
-            algorithm_selector.addItem(algorithm.name)
-        algorithm_selector.currentIndexChanged.connect(self.__on_change_algorithm)
-        algorithm_group.addWidget(algorithm_selector)
+        self.update_algorithms()
+        algorithm_group.addWidget(self.algorithm_selector)
 
         layout.addLayout(network_group)
         layout.addLayout(algorithm_group)

@@ -17,6 +17,7 @@ class Storage(metaclass=SingletonMeta):
         self.networks = []
         self.diagrams = []
         self.algorithms = []
+        self.algorithm_change_listeners = []
 
     def load_save_state(self, save_state: SaveState):
         pass
@@ -24,12 +25,18 @@ class Storage(metaclass=SingletonMeta):
     def get_save_state(self) -> SaveState:
         pass
 
-    def remove_algorithm(self, algo_name):
-        self.algorithms.remove(algo_name)
+    def remove_algorithm(self, algo_path):
+        matching_indeces = [i for i in range(len(self.algorithms)) if self.algorithms[i].path == algo_path]
+        if not matching_indeces:
+            return
+        del self.algorithms[matching_indeces[0]]
         self.__call_listeners()
 
-    def modify_algorithm(self, algo_name, new_algorithm):
-        self.algorithms[algo_name] = new_algorithm
+    def modify_algorithm(self, algo_path, new_algorithm):
+        matching_indices = [i for i in range(len(self.algorithms)) if self.algorithms[i].path == algo_path]
+        if not matching_indices:
+            return
+        self.algorithms[matching_indices[0]] = new_algorithm
         self.__call_listeners()
 
     def add_algorithm(self, new_algorithm):
