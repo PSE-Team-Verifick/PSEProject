@@ -1,6 +1,8 @@
 from typing import Dict, List
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex
 
+import numpy as np
+
 
 class InputBounds(QAbstractTableModel):
     __value: List[tuple[float, float]]
