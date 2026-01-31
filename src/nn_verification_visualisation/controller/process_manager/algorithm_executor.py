@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import numpy
 import numpy as np
 
+from nn_verification_visualisation.controller.process_manager.network_modifier import NetworkModifier
 from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
 from nn_verification_visualisation.model.data_loader.algorithm_loader import AlgorithmLoader
 from nn_verification_visualisation.utils.result import Result, Success, Failure
@@ -18,8 +20,9 @@ class AlgorithmExecutor:
             fn_res = AlgorithmLoader.load_calculate_output_bounds(config.algorithm.path)
             if not fn_res.is_success:
                 raise fn_res.error
-
-            output_bounds = fn_res.data(model, input_bounds)
+            directions = AlgorithmExecutor.calculate_directions(self,16)
+            modified_model = NetworkModifier.custom_output_layer(NetworkModifier, model, config.selected_neurons, directions)
+            output_bounds = fn_res.data(modified_model, input_bounds)
             return Success(output_bounds)
 
         except BaseException as e:
@@ -46,3 +49,8 @@ class AlgorithmExecutor:
             arr[r, 0] = float(lo)
             arr[r, 1] = float(hi)
         return arr
+    def   calculate_directions(self, num_directions: int) -> list[tuple[float, float]]:
+        directions = []
+        for i in range(1, num_directions):
+            directions.append((numpy.sin(2 * numpy.pi * i / num_directions), numpy.cos(2 * numpy.pi * i / num_directions)))
+        return directions
