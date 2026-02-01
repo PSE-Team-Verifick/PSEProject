@@ -1,6 +1,6 @@
 from typing import Callable
 
-from PySide6.QtGui import QColor, QIcon
+from PySide6.QtGui import QColor, QIcon, QKeyEvent
 from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QLabel, QHBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt, QSize
 
@@ -79,3 +79,12 @@ class DialogBase(QWidget):
         bar_layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         return bar
+
+    def keyPressEvent(self, event: QKeyEvent):
+        """
+        Captured every time a key is pressed while the widget has focus.
+        """
+        if event.key() == Qt.Key.Key_Escape:
+            self.on_close()
+        else:
+            super().keyPressEvent(event)
