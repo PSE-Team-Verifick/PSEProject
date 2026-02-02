@@ -8,5 +8,8 @@
     <file>assets/icons/error.svg</file>
     <file>assets/icons/focus_node.svg</file>
     <file>assets/icons/hourglass.svg</file>
+    <file>assets/icons/add_chart.svg</file>
+    <file>assets/icons/network/network.svg</file>
+    <file>assets/icons/plot/chart.svg</file>
   </qresource>
 </RCC>
