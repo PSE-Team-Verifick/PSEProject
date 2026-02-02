@@ -4,5 +4,9 @@
     <file>assets/icons/edit_icon.svg</file>
     <file>assets/icons/menu_icon.svg</file>
     <file>assets/icons/add_icon.svg</file>
+    <file>assets/icons/check.svg</file>
+    <file>assets/icons/error.svg</file>
+    <file>assets/icons/focus_node.svg</file>
+    <file>assets/icons/hourglass.svg</file>
   </qresource>
 </RCC>

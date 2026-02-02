@@ -303,7 +303,7 @@ QLabel,QMenu::item::text,QListWidget::item, #label, #popup-content {
 }
 
 #pair-loading-container {
-    background-color: @component;
+    background-color: @bg1;
     color: red;
     border-radius: 10px;
 }
