@@ -18,7 +18,7 @@ from nn_verification_visualisation.view.network_view.network_widget import Netwo
 
 def get_neuron_colors(num_neurons) -> List[QColor]:
     """
-        Returns a list of n hex codes for pair colors.
+        Returns a list of n hex codes for neuron colors.
         Based on the Okabe-Ito palette (optimized for color blindness).
         If more than 8 neurons are selected, random colors are used to fill up the list.
     """
@@ -49,8 +49,8 @@ class NeuronPicker(DialogBase):
     num_neurons: int
     max_neuron_num_per_layer: List[int]
 
-    pair_selection_index: int
-    pair_colors: List[QColor]
+    neuron_selection_index: int
+    neuron_colors: List[QColor]
 
     network_widget: NetworkWidget = None
     node_spin_boxes: List[Tuple[QSpinBox, QSpinBox]]
@@ -65,8 +65,8 @@ class NeuronPicker(DialogBase):
         self.node_spin_boxes = []
         self.max_neuron_num_per_layer = []
         self.parameters = []
-        self.pair_selection_index = 0
-        self.pair_colors = get_neuron_colors(self.num_neurons)
+        self.neuron_selection_index = 0
+        self.neuron_colors = get_neuron_colors(self.num_neurons)
 
         self.algorithm_selector = QComboBox()
         self.algorithm_selector.currentIndexChanged.connect(
@@ -195,7 +195,7 @@ class NeuronPicker(DialogBase):
             neuron_spin.blockSignals(False)
 
         # Reset stored choices
-        self.current_neurons = [(0, 0) for _ in range(self.num_neurons)]
+        self.current_neurons = [(0, min(i, self.max_neuron_num_per_layer[i] -1)) for i in range(self.num_neurons)]
 
         # Visual update
         if self.network_presentation.count() > 0:
@@ -205,6 +205,11 @@ class NeuronPicker(DialogBase):
                 item.widget().deleteLater()
 
         self.network_presentation.addWidget(self.network_widget)
+
+        for i, (layer, neuron) in enumerate(self.current_neurons):
+            self.network_widget.select_node(layer, neuron, self.neuron_colors[i])
+            self.node_spin_boxes[i][0].setValue(layer)
+            self.node_spin_boxes[i][1].setValue(neuron)
 
     def __on_change_algorithm(self, index: int):
         if Storage().algorithms:
@@ -233,13 +238,13 @@ class NeuronPicker(DialogBase):
             self.network_widget.unselect_node(old_layer, old_node)
         else:
             remaining_idx = remaining_indices[-1]
-            self.network_widget.select_node(old_layer, old_node, self.pair_colors[remaining_idx])
+            self.network_widget.select_node(old_layer, old_node, self.neuron_colors[remaining_idx])
 
         self.current_neurons[selection_index] = (new_layer, new_node)
 
-        self.network_widget.select_node(new_layer, new_node, self.pair_colors[selection_index])
+        self.network_widget.select_node(new_layer, new_node, self.neuron_colors[selection_index])
 
-        self.pair_selection_index = (selection_index + 1) % self.num_neurons
+        self.neuron_selection_index = (selection_index + 1) % self.num_neurons
 
     def __on_change_layer_choice(self, selection_index: int, layer_index: int):
         if layer_index >= len(self.max_neuron_num_per_layer):
@@ -270,20 +275,20 @@ class NeuronPicker(DialogBase):
             self.network_widget.go_to_node(layer, node)
 
     def __on_node_selection_change(self, layer_index: int, node_index: int) -> QColor | None:
-        old_layer, old_node = self.current_neurons[self.pair_selection_index]
+        old_layer, old_node = self.current_neurons[self.neuron_selection_index]
 
         is_still_selected = any(
             (l == old_layer and n == old_node)
             for i, (l, n) in enumerate(self.current_neurons)
-            if i != self.pair_selection_index
+            if i != self.neuron_selection_index
         )
 
         if self.network_widget and not is_still_selected:
             self.network_widget.unselect_node(old_layer, old_node)
 
-        self.current_neurons[self.pair_selection_index] = (layer_index, node_index)
+        self.current_neurons[self.neuron_selection_index] = (layer_index, node_index)
 
-        layer_spin_box, value_spin_box = self.node_spin_boxes[self.pair_selection_index]
+        layer_spin_box, value_spin_box = self.node_spin_boxes[self.neuron_selection_index]
 
         layer_spin_box.blockSignals(True)
         value_spin_box.blockSignals(True)
@@ -294,10 +299,10 @@ class NeuronPicker(DialogBase):
         layer_spin_box.blockSignals(False)
         value_spin_box.blockSignals(False)
 
-        former_index = self.pair_selection_index
-        self.pair_selection_index = (self.pair_selection_index + 1) % self.num_neurons
+        former_index = self.neuron_selection_index
+        self.neuron_selection_index = (self.neuron_selection_index + 1) % self.num_neurons
 
-        return self.pair_colors[former_index]
+        return self.neuron_colors[former_index]
 
     def __get_side_bar_content(self) -> QVBoxLayout:
         layout = QVBoxLayout()
@@ -325,19 +330,58 @@ class NeuronPicker(DialogBase):
         layout.addLayout(network_group)
         layout.addLayout(algorithm_group)
 
-        # --- Neuron Pair Selectors ---
+        # --- Bounds Selector ---
+        bounds_group = QHBoxLayout()
+        bounds_group.setSpacing(8)
+        bounds_group.addWidget(QLabel("Bounds:"))
+        self.bounds_selector = QComboBox()
+        self.__populate_bounds_selector(self.current_network)
+        self.bounds_selector.currentIndexChanged.connect(self.__on_bounds_changed)
+        bounds_group.addWidget(self.bounds_selector)
+        self.bounds_toggle_button = QPushButton("👁")
+        self.bounds_toggle_button.setObjectName("transparent-button")
+        self.bounds_toggle_button.setFixedWidth(32)
+        self.bounds_toggle_button.clicked.connect(self.__toggle_bounds_display)
+        self.bounds_toggle_button.setVisible(self.__can_show_bounds_display())
+        bounds_group.addWidget(self.bounds_toggle_button)
+        layout.addLayout(bounds_group)
+        layout.addSpacing(8)
+
+        # --- Bounds Display ---
+        self.bounds_display_group = QGroupBox("Bounds")
+        display_layout = QVBoxLayout(self.bounds_display_group)
+        display_layout.setContentsMargins(6, 6, 6, 6)
+        display_layout.setSpacing(4)
+        self.bounds_display_rows = []
+        input_count = 0
+        if Storage().networks:
+            input_count = Storage().networks[self.current_network].layers_dimensions[0]
+        for i in range(input_count):
+            row_layout = QHBoxLayout()
+            label = QLabel(f"{i}:")
+            label.setObjectName("label")
+            min_label = QLabel("-")
+            max_label = QLabel("-")
+            min_label.setObjectName("label")
+            max_label.setObjectName("label")
+            row_layout.addWidget(label)
+            row_layout.addWidget(min_label)
+            row_layout.addWidget(max_label)
+            display_layout.addLayout(row_layout)
+            self.bounds_display_rows.append((min_label, max_label))
+        # --- Neuron Selectors ---
         for i in range(0, self.num_neurons):
-            neuron_pair_group = QHBoxLayout()
-            label = QLabel(f"Pair {i + 1}")
+            neuron_group = QHBoxLayout()
+            label = QLabel(f"Neuron {i + 1}")
             label.setAlignment(Qt.AlignmentFlag.AlignBottom)
-            neuron_pair_group.addWidget(label)
+            neuron_group.addWidget(label)
 
             # Color Circle
-            color = self.pair_colors[i].name()
+            color = self.neuron_colors[i].name()
             color_circle = QLabel()
             color_circle.setFixedSize(16, 16)
             color_circle.setStyleSheet(f"background-color: {color}; border-radius: 8px;")
-            neuron_pair_group.addWidget(color_circle, alignment=Qt.AlignmentFlag.AlignBottom)
+            neuron_group.addWidget(color_circle, alignment=Qt.AlignmentFlag.AlignBottom)
 
             # Controls
             layer_spinbox = QSpinBox()
@@ -379,13 +423,13 @@ class NeuronPicker(DialogBase):
             node_box.addWidget(neuron_spinbox)
             node_box.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
-            neuron_pair_group.addStretch()
-            neuron_pair_group.addLayout(layer_box)
-            neuron_pair_group.addWidget(colon)
-            neuron_pair_group.addLayout(node_box)
-            neuron_pair_group.addWidget(eye_button)
+            neuron_group.addStretch()
+            neuron_group.addLayout(layer_box)
+            neuron_group.addWidget(colon)
+            neuron_group.addLayout(node_box)
+            neuron_group.addWidget(eye_button, alignment=Qt.AlignmentFlag.AlignBottom)
 
-            layout.addLayout(neuron_pair_group)
+            layout.addLayout(neuron_group)
 
         layout.addStretch()
 
