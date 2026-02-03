@@ -6,6 +6,11 @@ from PySide6.QtCore import Qt, QFile, QIODevice
 
 
 class ColorManager:
+    '''
+    Manages the theme switch between the network view and the plot view. Stores the color and font data for both themes.
+    Works by reading the stylesheet from disk and replacing its colors with the colors of the active theme.
+    Sets a new stylesheet at every theme change.
+    '''
     app: QApplication
     raw_stylesheet: str
 
@@ -52,16 +57,22 @@ class ColorManager:
         file.open(QIODevice.ReadOnly | QIODevice.Text)
         self.raw_stylesheet = file.readAll().data().decode("utf-8")
         print(self.raw_stylesheet)
-        print("kek")
-        # self.raw_stylesheet = ((Path(__file__) / path_str).read_text())
 
     def set_colors(self, colors: dict[str, str]):
+        '''
+        Changes the color theme of the application. A new stylesheet gets created from self.raw_stylesheet by replacing its colors.
+        The QPalette of the app is changed to update the colors of all default QWidgets.
+        :param colors:
+        :return:
+        '''
+
+        # Replace colors of style sheet
         stylesheet = self.raw_stylesheet
         for (key, val) in colors.items():
             stylesheet = stylesheet.replace("@" + key, val)
 
+        # Create new QPalette
         palette = QPalette()
-
         palette.setColor(QPalette.Window, QColor(colors["bg0"]))
         palette.setColor(QPalette.WindowText, Qt.GlobalColor.black)
         palette.setColor(QPalette.Base, QColor(colors["bg0"]))
@@ -75,6 +86,7 @@ class ColorManager:
         palette.setColor(QPalette.Highlight, QColor("#0078d7"))
         palette.setColor(QPalette.HighlightedText, Qt.GlobalColor.white)
 
+        # Update app
         self.app.setPalette(palette)
         self.app.setStyleSheet(stylesheet)
 

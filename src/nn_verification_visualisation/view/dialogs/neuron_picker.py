@@ -1,19 +1,48 @@
+import random
 from typing import List, Callable, Tuple
+
+from PySide6.QtGui import QColor, QIcon
 from numpy import clip
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QWidget, QSplitter, QLabel, QHBoxLayout,
-                               QVBoxLayout, QComboBox, QSpinBox, QPushButton, QLayout)
+                               QVBoxLayout, QComboBox, QSpinBox, QPushButton, QLayout, QGroupBox)
 
 # Assuming these imports exist in your project structure
 from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
 from nn_verification_visualisation.model.data.storage import Storage
 from nn_verification_visualisation.view.dialogs.dialog_base import DialogBase
+from nn_verification_visualisation.view.network_view.network_node import NetworkNode
 from nn_verification_visualisation.view.network_view.network_widget import NetworkWidget
+from nn_verification_visualisation.view.dialogs.run_samples_dialog import RunSamplesDialog
+
+
+def get_neuron_colors(num_neurons) -> List[QColor]:
+    """
+        Returns a list of n hex codes for pair colors.
+        Based on the Okabe-Ito palette (optimized for color blindness).
+        If more than 8 neurons are selected, random colors are used to fill up the list.
+    """
+    # The Okabe-Ito palette (optimized for color blindness)
+    # Black is left out for contrast reasons
+    palette = [
+        QColor("#E69F00"), QColor("#56B4E9"), QColor("#009E73"), QColor("#F0E442"),
+        QColor("#0072B2"), QColor("#D55E00"), QColor("#CC79A7")
+    ]
+
+    if num_neurons <= len(palette):
+        return palette[:num_neurons]
+
+    # Generates predictable random colors
+    rng = random.Random(0)
+    extra_colors = []
+    for _ in range(num_neurons - len(palette)):
+        extra_colors.append(QColor("#%06x" % rng.randint(0, 0xFFFFFF)))
+
+    return palette + extra_colors
 
 
 class NeuronPicker(DialogBase):
-    # Type hinting references (initialized in __init__ to prevent state persistence issues)
     current_network: int
     current_algorithm: str
     current_neurons: List[Tuple[int, int]]
@@ -21,10 +50,15 @@ class NeuronPicker(DialogBase):
     num_neurons: int
     max_neuron_num_per_layer: List[int]
 
+    pair_selection_index: int
+    pair_colors: List[QColor]
+
     network_widget: NetworkWidget = None
     node_spin_boxes: List[Tuple[QSpinBox, QSpinBox]]
     network_presentation: QVBoxLayout
     algorithm_selector: QComboBox
+    bounds_selector: QComboBox | None
+    max_bounds_display_inputs: int
 
     def __init__(self, on_close: Callable[[], None], num_neurons: int = 2):
         self.num_neurons = num_neurons
@@ -34,11 +68,17 @@ class NeuronPicker(DialogBase):
         self.node_spin_boxes = []
         self.max_neuron_num_per_layer = []
         self.parameters = []
+        self.pair_selection_index = 0
+        self.pair_colors = get_neuron_colors(self.num_neurons)
 
         self.algorithm_selector = QComboBox()
         self.algorithm_selector.currentIndexChanged.connect(
             self.__on_change_algorithm
         )
+        self.bounds_selector = None
+        self.bounds_display_rows = []
+        self.bounds_display_group = None
+        self.max_bounds_display_inputs = 20
 
         # Update the algorithm list on change
         Storage().algorithm_change_listeners.append(self.update_algorithms)
@@ -69,7 +109,7 @@ class NeuronPicker(DialogBase):
         # 1. Setup Side Bar (This creates the spinboxes)
         side_bar = QWidget()
         side_bar.setObjectName("dialog-sidebar")
-        side_bar.setMinimumWidth(250)
+        side_bar.setMinimumWidth(270)
         side_bar.setLayout(self.__get_side_bar_content())
 
         # 2. Setup Network Presentation
@@ -97,7 +137,7 @@ class NeuronPicker(DialogBase):
         splitter.setObjectName("transparent")
 
         splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 4)
+        splitter.setStretchFactor(1, 3)
 
         network_picker_layout.addWidget(splitter)
 
@@ -108,11 +148,14 @@ class NeuronPicker(DialogBase):
 
     def __get_button_row(self) -> QLayout:
         move_buttons = QHBoxLayout()
+        run_samples_button = QPushButton("Run Samples")
+        run_samples_button.clicked.connect(self.__on_run_samples_clicked)
         back_button = QPushButton("Back")
         back_button.clicked.connect(self.close)
         continue_button = QPushButton("Continue")
         continue_button.clicked.connect(self.on_close)
 
+        move_buttons.addWidget(run_samples_button)
         move_buttons.addWidget(back_button)
         move_buttons.addWidget(continue_button)
         move_buttons.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -137,9 +180,15 @@ class NeuronPicker(DialogBase):
         print(f"Network changed to {Storage().networks[index].network.name}")
         new_network = Storage().networks[index]
         self.current_network = index
+        if self.bounds_selector is not None:
+            self.__populate_bounds_selector(index)
+        self.__rebuild_bounds_display_rows()
+        self.__update_bounds_display()
+        if hasattr(self, "bounds_toggle_button") and self.bounds_toggle_button is not None:
+            self.bounds_toggle_button.setVisible(self.__can_show_bounds_display())
 
         # Re-create the network widget
-        self.network_widget = NetworkWidget(Storage().networks[index])
+        self.network_widget = NetworkWidget(Storage().networks[index], nodes_selectable=True, on_selection_changed=self.__on_node_selection_change)
 
         # Update limits based on new network
         self.max_neuron_num_per_layer = new_network.layers_dimensions
@@ -177,32 +226,127 @@ class NeuronPicker(DialogBase):
         if Storage().algorithms:
             self.current_algorithm = Storage().algorithms[index].name
 
+    def __handle_node_transition(self, selection_index: int, new_layer: int, new_node: int):
+        """
+        Handles the transition of a node from one layer/node to another.
+        This includes updating the visual selection accordingly, as well as the stored data model.
+        """
+        old_layer, old_node = self.current_neurons[selection_index]
+
+        if old_layer == new_layer and old_node == new_node:
+            return
+
+        if not self.network_widget:
+            return
+
+        # Check if the old node is used by another selection.
+        # If so, the color of the selection underneath needs to be applied
+        remaining_indices = [
+            i for i, (l, n) in enumerate(self.current_neurons)
+            if i != selection_index and l == old_layer and n == old_node
+        ]
+        if not remaining_indices:
+            self.network_widget.unselect_node(old_layer, old_node)
+        else:
+            remaining_idx = remaining_indices[-1]
+            self.network_widget.select_node(old_layer, old_node, self.pair_colors[remaining_idx])
+
+        self.current_neurons[selection_index] = (new_layer, new_node)
+
+        self.network_widget.select_node(new_layer, new_node, self.pair_colors[selection_index])
+
+        self.pair_selection_index = (selection_index + 1) % self.num_neurons
+
     def __on_change_layer_choice(self, selection_index: int, layer_index: int):
-        # Safety check for index out of bounds
         if layer_index >= len(self.max_neuron_num_per_layer):
             return
 
         new_max_node_num = self.max_neuron_num_per_layer[layer_index]
 
-        new_node_index = clip(self.current_neurons[selection_index][1], 0, new_max_node_num - 1)
-        # Update the stored tuple
-        self.current_neurons[selection_index] = (layer_index, new_node_index)
+        # Clip the node index to fit the new layer size
+        current_node_val = self.current_neurons[selection_index][1]
+        new_node_index = min(current_node_val, new_max_node_num - 1) if new_max_node_num > 0 else 0
 
-        # Update UI constraints
-        spin_box = self.node_spin_boxes[selection_index][1]
-        spin_box.blockSignals(True)  # Prevent recursion
-        spin_box.setRange(0, new_max_node_num - 1 if new_max_node_num > 0 else 0)
-        spin_box.setValue(new_node_index)
-        spin_box.blockSignals(False)
+        self.__handle_node_transition(selection_index, layer_index, new_node_index)
+
+        # Update UI constraints for the Node SpinBox
+        node_spin_box = self.node_spin_boxes[selection_index][1]
+        node_spin_box.blockSignals(True)
+        node_spin_box.setRange(0, new_max_node_num - 1 if new_max_node_num > 0 else 0)
+        node_spin_box.setValue(new_node_index)
+        node_spin_box.blockSignals(False)
 
     def __on_change_choice_within_layer(self, selection_index: int, node_index: int):
         current_layer = self.current_neurons[selection_index][0]
-        self.current_neurons[selection_index] = (current_layer, node_index)
+        self.__handle_node_transition(selection_index, current_layer, node_index)
 
     def __jump_to_neuron(self, neuron_index: int):
         if self.network_widget:
             layer, node = self.current_neurons[neuron_index]
             self.network_widget.go_to_node(layer, node)
+
+    def __on_run_samples_clicked(self):
+        if not Storage().networks:
+            return
+        if self.current_network < 0 or self.current_network >= len(Storage().networks):
+            return
+        config = Storage().networks[self.current_network]
+        parent = self.parent()
+        if parent is None or not hasattr(parent, "open_dialog"):
+            return
+        dialog = RunSamplesDialog(parent.close_dialog, config)
+        parent.open_dialog(dialog)
+
+    def __populate_bounds_selector(self, network_index: int):
+        if self.bounds_selector is None:
+            return
+        self.bounds_selector.blockSignals(True)
+        self.bounds_selector.clear()
+        if network_index < 0 or network_index >= len(Storage().networks):
+            self.bounds_selector.blockSignals(False)
+            return
+        config = Storage().networks[network_index]
+        for i, _ in enumerate(config.saved_bounds):
+            self.bounds_selector.addItem(f"Bounds {i + 1:02d}")
+        if 0 <= config.selected_bounds_index < self.bounds_selector.count():
+            self.bounds_selector.setCurrentIndex(config.selected_bounds_index)
+        self.bounds_selector.blockSignals(False)
+
+    def __on_bounds_changed(self, index: int):
+        if self.current_network < 0 or self.current_network >= len(Storage().networks):
+            return
+        config = Storage().networks[self.current_network]
+        config.selected_bounds_index = index
+        self.__update_bounds_display()
+    def __on_node_selection_change(self, layer_index: int, node_index: int) -> QColor | None:
+        old_layer, old_node = self.current_neurons[self.pair_selection_index]
+
+        is_still_selected = any(
+            (l == old_layer and n == old_node)
+            for i, (l, n) in enumerate(self.current_neurons)
+            if i != self.pair_selection_index
+        )
+
+        if self.network_widget and not is_still_selected:
+            self.network_widget.unselect_node(old_layer, old_node)
+
+        self.current_neurons[self.pair_selection_index] = (layer_index, node_index)
+
+        layer_spin_box, value_spin_box = self.node_spin_boxes[self.pair_selection_index]
+
+        layer_spin_box.blockSignals(True)
+        value_spin_box.blockSignals(True)
+
+        layer_spin_box.setValue(layer_index)
+        value_spin_box.setValue(node_index)
+
+        layer_spin_box.blockSignals(False)
+        value_spin_box.blockSignals(False)
+
+        former_index = self.pair_selection_index
+        self.pair_selection_index = (self.pair_selection_index + 1) % self.num_neurons
+
+        return self.pair_colors[former_index]
 
     def __get_side_bar_content(self) -> QVBoxLayout:
         layout = QVBoxLayout()
@@ -230,6 +374,45 @@ class NeuronPicker(DialogBase):
         layout.addLayout(network_group)
         layout.addLayout(algorithm_group)
 
+        # --- Bounds Selector ---
+        bounds_group = QHBoxLayout()
+        bounds_group.setSpacing(8)
+        bounds_group.addWidget(QLabel("Bounds:"))
+        self.bounds_selector = QComboBox()
+        self.__populate_bounds_selector(self.current_network)
+        self.bounds_selector.currentIndexChanged.connect(self.__on_bounds_changed)
+        bounds_group.addWidget(self.bounds_selector)
+        self.bounds_toggle_button = QPushButton("👁")
+        self.bounds_toggle_button.setObjectName("transparent-button")
+        self.bounds_toggle_button.setFixedWidth(32)
+        self.bounds_toggle_button.clicked.connect(self.__toggle_bounds_display)
+        self.bounds_toggle_button.setVisible(self.__can_show_bounds_display())
+        bounds_group.addWidget(self.bounds_toggle_button)
+        layout.addLayout(bounds_group)
+        layout.addSpacing(8)
+
+        # --- Bounds Display ---
+        self.bounds_display_group = QGroupBox("Bounds")
+        display_layout = QVBoxLayout(self.bounds_display_group)
+        display_layout.setContentsMargins(6, 6, 6, 6)
+        display_layout.setSpacing(4)
+        self.bounds_display_rows = []
+        input_count = 0
+        if Storage().networks:
+            input_count = Storage().networks[self.current_network].layers_dimensions[0]
+        for i in range(input_count):
+            row_layout = QHBoxLayout()
+            label = QLabel(f"{i}:")
+            label.setObjectName("label")
+            min_label = QLabel("-")
+            max_label = QLabel("-")
+            min_label.setObjectName("label")
+            max_label.setObjectName("label")
+            row_layout.addWidget(label)
+            row_layout.addWidget(min_label)
+            row_layout.addWidget(max_label)
+            display_layout.addLayout(row_layout)
+            self.bounds_display_rows.append((min_label, max_label))
         # --- Neuron Pair Selectors ---
         for i in range(0, self.num_neurons):
             neuron_pair_group = QHBoxLayout()
@@ -238,7 +421,7 @@ class NeuronPicker(DialogBase):
             neuron_pair_group.addWidget(label)
 
             # Color Circle
-            color = "#35C54B"  # TODO: Implement automatic color selection
+            color = self.pair_colors[i].name()
             color_circle = QLabel()
             color_circle.setFixedSize(16, 16)
             color_circle.setStyleSheet(f"background-color: {color}; border-radius: 8px;")
@@ -246,12 +429,10 @@ class NeuronPicker(DialogBase):
 
             # Controls
             layer_spinbox = QSpinBox()
-            layer_spinbox.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
             layer_spinbox.setFixedWidth(48)
             layer_spinbox.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
             neuron_spinbox = QSpinBox()
-            neuron_spinbox.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
             neuron_spinbox.setFixedWidth(48)
             neuron_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight)
 
@@ -272,8 +453,9 @@ class NeuronPicker(DialogBase):
             node_hint = QLabel("Node")
             node_hint.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-            eye_button = QPushButton("👀")
-            eye_button.setObjectName("transparent-button")
+            eye_button = QPushButton("")
+            eye_button.setIcon(QIcon(":/assets/icons/focus_node.svg"))
+            eye_button.setObjectName("icon-button")
             eye_button.clicked.connect(lambda _, idx=i: self.__jump_to_neuron(idx))
 
             layer_box = QVBoxLayout()
@@ -290,10 +472,93 @@ class NeuronPicker(DialogBase):
             neuron_pair_group.addLayout(layer_box)
             neuron_pair_group.addWidget(colon)
             neuron_pair_group.addLayout(node_box)
-            neuron_pair_group.addWidget(eye_button)
+            neuron_pair_group.addWidget(eye_button, alignment=Qt.AlignmentFlag.AlignBottom)
 
             layout.addLayout(neuron_pair_group)
+
+        layout.addSpacing(12)
+        layout.addWidget(self.bounds_display_group)
+        self.bounds_display_group.setVisible(False)
+        self.__update_bounds_display()
 
         layout.addStretch()
 
         return layout
+
+    def __update_bounds_display(self):
+        if self.bounds_display_group is None:
+            return
+        if self.current_network < 0 or self.current_network >= len(Storage().networks):
+            self.bounds_display_group.setTitle("Bounds")
+            for min_label, max_label in self.bounds_display_rows:
+                min_label.setText("-")
+                max_label.setText("-")
+            return
+        config = Storage().networks[self.current_network]
+        index = config.selected_bounds_index
+        if index < 0 or index >= len(config.saved_bounds):
+            self.bounds_display_group.setTitle("Bounds")
+            for min_label, max_label in self.bounds_display_rows:
+                min_label.setText("-")
+                max_label.setText("-")
+            return
+        bounds = config.saved_bounds[index]
+        self.bounds_display_group.setTitle(f"Bounds {index + 1:02d}")
+        values = bounds.get_values()
+        for i, (min_label, max_label) in enumerate(self.bounds_display_rows):
+            if i < len(values):
+                min_label.setText(f"{values[i][0]:.2f}")
+                max_label.setText(f"{values[i][1]:.2f}")
+            else:
+                min_label.setText("-")
+                max_label.setText("-")
+
+    def __toggle_bounds_display(self):
+        if self.bounds_display_group is None:
+            return
+        if not self.__can_show_bounds_display():
+            self.bounds_display_group.setVisible(False)
+            return
+        self.bounds_display_group.setVisible(not self.bounds_display_group.isVisible())
+
+    def __rebuild_bounds_display_rows(self):
+        if self.bounds_display_group is None:
+            return
+        layout = self.bounds_display_group.layout()
+        if layout is None:
+            return
+        if not self.__can_show_bounds_display():
+            while layout.count():
+                item = layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
+            self.bounds_display_rows = []
+            self.bounds_display_group.setVisible(False)
+            return
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        self.bounds_display_rows = []
+        input_count = 0
+        if Storage().networks and 0 <= self.current_network < len(Storage().networks):
+            input_count = Storage().networks[self.current_network].layers_dimensions[0]
+        for i in range(input_count):
+            row_layout = QHBoxLayout()
+            label = QLabel(f"{i}:")
+            label.setObjectName("label")
+            min_label = QLabel("-")
+            max_label = QLabel("-")
+            min_label.setObjectName("label")
+            max_label.setObjectName("label")
+            row_layout.addWidget(label)
+            row_layout.addWidget(min_label)
+            row_layout.addWidget(max_label)
+            layout.addLayout(row_layout)
+            self.bounds_display_rows.append((min_label, max_label))
+
+    def __can_show_bounds_display(self) -> bool:
+        if not Storage().networks or self.current_network < 0 or self.current_network >= len(Storage().networks):
+            return False
+        input_count = Storage().networks[self.current_network].layers_dimensions[0]
+        return input_count <= self.max_bounds_display_inputs
