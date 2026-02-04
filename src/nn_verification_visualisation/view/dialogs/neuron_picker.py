@@ -6,7 +6,7 @@ from numpy import clip
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QWidget, QSplitter, QLabel, QHBoxLayout,
-                               QVBoxLayout, QComboBox, QSpinBox, QPushButton, QLayout, QGroupBox)
+                               QVBoxLayout, QComboBox, QSpinBox, QPushButton, QLayout, QGroupBox, QScrollArea, QGridLayout)
 
 # Assuming these imports exist in your project structure
 from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
@@ -58,8 +58,6 @@ class NeuronPicker(DialogBase):
     network_presentation: QVBoxLayout
     algorithm_selector: QComboBox
     bounds_selector: QComboBox | None
-    max_bounds_display_inputs: int
-
     def __init__(self, on_close: Callable[[], None], num_neurons: int = 2):
         self.num_neurons = num_neurons
         self.current_network = 0
@@ -78,7 +76,8 @@ class NeuronPicker(DialogBase):
         self.bounds_selector = None
         self.bounds_display_rows = []
         self.bounds_display_group = None
-        self.max_bounds_display_inputs = 20
+        self.bounds_scroll_area = None
+        self.bounds_scroll_content = None
 
         # Update the algorithm list on change
         Storage().algorithm_change_listeners.append(self.update_algorithms)
@@ -185,7 +184,7 @@ class NeuronPicker(DialogBase):
         self.__rebuild_bounds_display_rows()
         self.__update_bounds_display()
         if hasattr(self, "bounds_toggle_button") and self.bounds_toggle_button is not None:
-            self.bounds_toggle_button.setVisible(self.__can_show_bounds_display())
+            self.bounds_toggle_button.setVisible(True)
 
         # Re-create the network widget
         self.network_widget = NetworkWidget(Storage().networks[index], nodes_selectable=True, on_selection_changed=self.__on_node_selection_change)
@@ -386,33 +385,44 @@ class NeuronPicker(DialogBase):
         self.bounds_toggle_button.setObjectName("transparent-button")
         self.bounds_toggle_button.setFixedWidth(32)
         self.bounds_toggle_button.clicked.connect(self.__toggle_bounds_display)
-        self.bounds_toggle_button.setVisible(self.__can_show_bounds_display())
+        self.bounds_toggle_button.setVisible(True)
         bounds_group.addWidget(self.bounds_toggle_button)
         layout.addLayout(bounds_group)
         layout.addSpacing(8)
 
         # --- Bounds Display ---
         self.bounds_display_group = QGroupBox("Bounds")
-        display_layout = QVBoxLayout(self.bounds_display_group)
-        display_layout.setContentsMargins(6, 6, 6, 6)
-        display_layout.setSpacing(4)
+        group_layout = QVBoxLayout(self.bounds_display_group)
+        group_layout.setContentsMargins(6, 6, 6, 6)
+        group_layout.setSpacing(4)
+        self.bounds_scroll_area = QScrollArea()
+        self.bounds_scroll_area.setWidgetResizable(True)
+        self.bounds_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.bounds_scroll_content = QWidget()
+        display_layout = QGridLayout(self.bounds_scroll_content)
+        display_layout.setContentsMargins(0, 0, 0, 0)
+        display_layout.setHorizontalSpacing(12)
+        display_layout.setVerticalSpacing(4)
         self.bounds_display_rows = []
         input_count = 0
         if Storage().networks:
             input_count = Storage().networks[self.current_network].layers_dimensions[0]
         for i in range(input_count):
-            row_layout = QHBoxLayout()
             label = QLabel(f"{i}:")
             label.setObjectName("label")
+            label.setFixedWidth(28)
             min_label = QLabel("-")
             max_label = QLabel("-")
             min_label.setObjectName("label")
             max_label.setObjectName("label")
-            row_layout.addWidget(label)
-            row_layout.addWidget(min_label)
-            row_layout.addWidget(max_label)
-            display_layout.addLayout(row_layout)
+            min_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            max_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            display_layout.addWidget(label, i, 0)
+            display_layout.addWidget(min_label, i, 1)
+            display_layout.addWidget(max_label, i, 2)
             self.bounds_display_rows.append((min_label, max_label))
+        self.bounds_scroll_area.setWidget(self.bounds_scroll_content)
+        group_layout.addWidget(self.bounds_scroll_area)
         # --- Neuron Pair Selectors ---
         for i in range(0, self.num_neurons):
             neuron_pair_group = QHBoxLayout()
@@ -516,24 +526,15 @@ class NeuronPicker(DialogBase):
     def __toggle_bounds_display(self):
         if self.bounds_display_group is None:
             return
-        if not self.__can_show_bounds_display():
-            self.bounds_display_group.setVisible(False)
-            return
         self.bounds_display_group.setVisible(not self.bounds_display_group.isVisible())
 
     def __rebuild_bounds_display_rows(self):
         if self.bounds_display_group is None:
             return
-        layout = self.bounds_display_group.layout()
-        if layout is None:
+        if self.bounds_scroll_content is None:
             return
-        if not self.__can_show_bounds_display():
-            while layout.count():
-                item = layout.takeAt(0)
-                if item.widget():
-                    item.widget().deleteLater()
-            self.bounds_display_rows = []
-            self.bounds_display_group.setVisible(False)
+        layout = self.bounds_scroll_content.layout()
+        if layout is None:
             return
         while layout.count():
             item = layout.takeAt(0)
@@ -544,21 +545,16 @@ class NeuronPicker(DialogBase):
         if Storage().networks and 0 <= self.current_network < len(Storage().networks):
             input_count = Storage().networks[self.current_network].layers_dimensions[0]
         for i in range(input_count):
-            row_layout = QHBoxLayout()
             label = QLabel(f"{i}:")
             label.setObjectName("label")
+            label.setFixedWidth(28)
             min_label = QLabel("-")
             max_label = QLabel("-")
             min_label.setObjectName("label")
             max_label.setObjectName("label")
-            row_layout.addWidget(label)
-            row_layout.addWidget(min_label)
-            row_layout.addWidget(max_label)
-            layout.addLayout(row_layout)
+            min_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            max_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            layout.addWidget(label, i, 0)
+            layout.addWidget(min_label, i, 1)
+            layout.addWidget(max_label, i, 2)
             self.bounds_display_rows.append((min_label, max_label))
-
-    def __can_show_bounds_display(self) -> bool:
-        if not Storage().networks or self.current_network < 0 or self.current_network >= len(Storage().networks):
-            return False
-        input_count = Storage().networks[self.current_network].layers_dimensions[0]
-        return input_count <= self.max_bounds_display_inputs
