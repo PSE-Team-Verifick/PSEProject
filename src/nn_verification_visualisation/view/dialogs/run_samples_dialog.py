@@ -63,8 +63,10 @@ class RunSamplesDialog(DialogBase):
         self,
         on_close: Callable[[], None],
         config: NetworkVerificationConfig,
+        on_results: Callable[[dict], None] | None = None,
     ):
         self.config = config
+        self._on_results = on_results
 
         self._thread: QThread | None = None
         self._worker: _SampleWorker | None = None
@@ -193,6 +195,8 @@ class RunSamplesDialog(DialogBase):
             bounds.set_sample(result)
         self.__set_running_state(False)
         self.__set_status("Samples computed and saved.")
+        if self._on_results is not None:
+            self._on_results(result)
         self.__show_results(result)
 
     def __on_worker_failed(self, message: str):

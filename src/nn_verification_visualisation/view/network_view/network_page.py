@@ -6,6 +6,7 @@ from nn_verification_visualisation.controller.input_manager.network_view_control
 from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
 from nn_verification_visualisation.view.base_view.tab import Tab
 from nn_verification_visualisation.view.network_view.network_widget import NetworkWidget
+from nn_verification_visualisation.view.widgets.sample_metrics_widget import SampleMetricsWidget
 
 
 class NetworkPage(Tab):
@@ -142,11 +143,15 @@ class NetworkPage(Tab):
 
         layout.addWidget(self.edit_group)
         layout.addWidget(self.display_group)
+        self.sample_metrics = SampleMetricsWidget("Sample Results", include_min=False, max_items=10)
+        self.sample_metrics.setVisible(False)
+        layout.addWidget(self.sample_metrics)
         layout.addStretch(1)
         base.setLayout(layout)
 
         self.__refresh_bounds_list()
         self.__set_edit_mode(False)
+        self.__update_sample_results()
 
         return base
 
@@ -166,12 +171,14 @@ class NetworkPage(Tab):
             self.controller.select_bounds(self.configuration, None)
             self.__set_bounds_editable(True)
             self.__set_edit_mode(True)
+            self.__update_sample_results()
             return
 
         self.controller.select_bounds(self.configuration, row)
         self.__set_bounds_editable(False)
         self.__set_edit_mode(False)
         self.__update_display_bounds()
+        self.__update_sample_results()
 
     def __on_remove_bounds_clicked(self):
         row = self.bounds_list.currentRow()
@@ -183,6 +190,7 @@ class NetworkPage(Tab):
             next_index = min(row, new_count - 1) if new_count > 0 else None
             self.__refresh_bounds_list(next_index)
             self.__update_display_bounds()
+            self.__update_sample_results()
 
     def __on_add_bounds_clicked(self):
         self.bounds_list.clearSelection()
@@ -190,9 +198,10 @@ class NetworkPage(Tab):
         self.__set_bounds_editable(True)
         self.__set_edit_mode(True)
         self.__update_samples_action()
+        self.__update_sample_results()
 
     def __on_run_samples_clicked(self):
-        self.controller.open_run_samples_dialog(self.configuration)
+        self.controller.open_run_samples_dialog(self.configuration, on_results=lambda _res: self.__update_sample_results())
 
     def __refresh_bounds_list(self, selected_row: int | None = None):
         self.bounds_list.blockSignals(True)
@@ -212,6 +221,7 @@ class NetworkPage(Tab):
             self.__set_bounds_editable(True)
             self.__set_edit_mode(False)
         self.__update_samples_action()
+        self.__update_sample_results()
         self.bounds_list.blockSignals(False)
 
     def __set_bounds_editable(self, editable: bool):
@@ -250,3 +260,15 @@ class NetworkPage(Tab):
                 min_label.setText("—")
                 max_label.setText("—")
         self.__update_samples_action()
+        self.__update_sample_results()
+
+    def __update_sample_results(self):
+        index = self.configuration.selected_bounds_index
+        if index < 0 or index >= len(self.configuration.saved_bounds):
+            self.sample_metrics.set_result(None)
+            self.sample_metrics.setVisible(False)
+            return
+        bounds = self.configuration.saved_bounds[index]
+        result = bounds.get_sample()
+        self.sample_metrics.set_result(result)
+        self.sample_metrics.setVisible(result is not None)
