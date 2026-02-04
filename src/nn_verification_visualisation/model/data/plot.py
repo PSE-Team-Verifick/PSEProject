@@ -1,14 +1,14 @@
-import numpy as np
+from matplotlib.figure import Figure
 
 class Plot:
     '''
     Data object for a single plot.
     :param name: the name of the plot.
-    :param data: output bounds data, shape (N, 2) as [lower, upper].
+    :param data: the data of the plot, provided by MatPlotlib.
     '''
     name: str
-    data: np.ndarray
+    data: Figure
 
-    def __init__(self, name: str, data: np.ndarray):
+    def __init__(self, name: str, data: Figure):
         self.name = name
         self.data = data
