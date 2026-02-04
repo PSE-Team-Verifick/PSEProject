@@ -1,6 +1,7 @@
 from typing import List
 
 from PySide6.QtCore import Qt, QEvent
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
@@ -47,7 +48,6 @@ class PlotPage(Tab):
 
     def __init__(self, controller: PlotViewController):
 
-
         self.__syncing = False
         self.__scroll_area = None
         self.__grid_host = None
@@ -58,7 +58,7 @@ class PlotPage(Tab):
         self.__node_pairs_list = None
         self.__node_pairs_layout = None
         self.controller = controller
-        super().__init__("Example Tab")
+        super().__init__("Example Tab", ":assets/icons/plot/chart.svg")
         # configuration is currently not implemented
         # self.configuration = configuration
 
@@ -116,6 +116,10 @@ class PlotPage(Tab):
         layout.addLayout(self.__diagram_groups_layout)
         self.__rebuild_diagram_groups()
 
+        add_diagram_button = QPushButton("Add Diagram")
+        add_diagram_button.clicked.connect(self.__add_diagram_from_current_bounds)
+        layout.addWidget(add_diagram_button, alignment=Qt.AlignmentFlag.AlignLeft)
+
         size_group = QGroupBox("Card Size")
         size_layout = QVBoxLayout(size_group)
         size_layout.setContentsMargins(6, 6, 6, 6)
@@ -137,6 +141,8 @@ class PlotPage(Tab):
         self.__node_pairs_layout = node_pairs_layout
         self.__node_pairs_list = QListWidget()
         node_pairs_layout.addWidget(self.__node_pairs_list)
+        node_pairs_layout.addSpacing(5)
+
         remove_pair_button = QPushButton("Remove Selected Pair")
         remove_pair_button.clicked.connect(self.__remove_selected_pair)
         node_pairs_layout.addWidget(remove_pair_button)
@@ -144,13 +150,6 @@ class PlotPage(Tab):
         layout.addWidget(node_pairs_group)
 
         layout.addStretch(1)
-
-        edit_button = QPushButton("Edit Comparison")
-        layout.addWidget(edit_button, alignment=Qt.AlignmentFlag.AlignLeft)
-
-        add_diagram_button = QPushButton("Add Diagram")
-        add_diagram_button.clicked.connect(self.__add_diagram_from_current_bounds)
-        layout.addWidget(add_diagram_button, alignment=Qt.AlignmentFlag.AlignLeft)
 
         return container
 
@@ -323,8 +322,8 @@ class PlotPage(Tab):
                 widget.setParent(None)
         for plot in self.plots:
             title = getattr(plot, "plot_title", "Diagram")
-            group = QGroupBox()
-            group.setObjectName("card")
+            group = QWidget()
+            group.setObjectName("foreground-item")
             group_layout = QVBoxLayout(group)
             group_layout.setContentsMargins(6, 6, 6, 6)
             group_layout.setSpacing(0)
@@ -335,8 +334,10 @@ class PlotPage(Tab):
             header_layout.setSpacing(6)
             header_layout.addWidget(QLabel(title))
             header_layout.addStretch(1)
-            delete_button = QPushButton("🗑")
-            delete_button.setFixedSize(28, 28)
+            delete_button = QPushButton()
+            delete_button.setObjectName("icon-button")
+            delete_button.setIcon(QIcon(":assets/icons/delete.svg"))
+            delete_button.setFixedSize(24, 24)
             delete_button.clicked.connect(lambda _=False, t=title: self.__remove_diagram(t))
             header_layout.addWidget(delete_button)
             group_layout.addWidget(header)

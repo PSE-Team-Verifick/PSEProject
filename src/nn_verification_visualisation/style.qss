@@ -16,13 +16,13 @@ QFrame {
     border: none;
 }
 
-
 QTabBar::tab {
     background-color: @bg1;
-    padding: 8px 16px;
+    padding: 8px 8px;
     margin: 5px 0px 5px 5px;
     border-radius: 10px;
     border: 0px;
+    height: 20px;
 }
 
 QTabBar::close-button {
@@ -114,11 +114,17 @@ QScrollBar::handle:horizontal {
 }
 
 QListWidget {
-    border: none;
+    border-radius: 10px;
+    background-color: @bg0;
+}
+
+QListWidget::viewport {
+    background-color: transparent;
 }
 
 QListWidget::item {
-    padding: 10px 5px;
+    margin: 3px;
+    padding: 7px;
     border-radius: 10px;
 }
 
@@ -130,6 +136,10 @@ QListWidget::item:selected {
 }
 QListWidget::item::text {
     border: none;
+}
+
+QListWidget::viewport {
+    background: transparent;
 }
 
 QSplitter {
@@ -190,6 +200,11 @@ QComboBox QAbstractItemView {
 
 #faded-background {
     background-color: rgba(0, 0, 0, 150);
+}
+
+#foreground-item {
+    background-color: @bg0;
+    border-radius: 10px;
 }
 
 #dialog-pane, #card {
@@ -267,6 +282,7 @@ QLabel,QMenu::item::text,QListWidget::item, #label, #popup-content {
     background-color: transparent;
     icon-size: 20px;
 }
+
 #close-button {
     margin: 5px;
 }
@@ -303,7 +319,7 @@ QLabel,QMenu::item::text,QListWidget::item, #label, #popup-content {
 }
 
 #pair-loading-container {
-    background-color: @component;
+    background-color: @bg1;
     color: red;
     border-radius: 10px;
 }
