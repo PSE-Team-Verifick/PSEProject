@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nn_verification_visualisation.controller.process_manager.algorithm_executor import AlgorithmExecutor
 from nn_verification_visualisation.model.data.algorithm_file_observer import AlgorithmFileObserver
 from nn_verification_visualisation.model.data.diagram_config import DiagramConfig
 from nn_verification_visualisation.model.data.plot import Plot
+from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
 from nn_verification_visualisation.view.dialogs.plot_config_dialog import PlotConfigDialog
 
 if TYPE_CHECKING:
@@ -49,8 +51,10 @@ class PlotViewController:
         else:
             selection.discard(pair_index)
 
-    def start_computation(self, config: DiagramConfig):
-        pass
+    def start_computation(self, config: PlotGenerationConfig):
+        return AlgorithmExecutor.execute_algorithm(AlgorithmExecutor, config)
+
+
 
     def change_tab(self, index: int):
         pass
