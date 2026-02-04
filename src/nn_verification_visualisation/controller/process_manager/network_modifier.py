@@ -7,7 +7,36 @@ class NetworkModifier:
     def with_all_outputs(static_model: ModelProto) -> ModelProto:
         model = copy.deepcopy(static_model)
         existing = {output.name for output in model.graph.output}
+        for model_input in model.graph.input:
+            if not model_input.name or model_input.name in existing:
+                continue
+            vi = onnx.ValueInfoProto()
+            vi.name = model_input.name
+            model.graph.output.append(vi)
+            existing.add(model_input.name)
+        activation_ops = {
+            "Relu",
+            "Sigmoid",
+            "Tanh",
+            "Softmax",
+            "LogSoftmax",
+            "LeakyRelu",
+            "Elu",
+            "Gelu",
+            "Clip",
+            "HardSigmoid",
+            "HardSwish",
+            "PRelu",
+            "Selu",
+            "Celu",
+            "Mish",
+            "Softplus",
+            "Softsign",
+            "Swish",
+        }
         for node in model.graph.node:
+            if node.op_type not in activation_ops:
+                continue
             for name in node.output:
                 if not name or name in existing:
                     continue
