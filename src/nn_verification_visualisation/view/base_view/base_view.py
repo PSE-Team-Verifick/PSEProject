@@ -14,14 +14,15 @@ class BaseView(QWidget):
 
     def __init__(self, color_manager: ColorManager, parent=None):
         super().__init__(parent)
+        self.color_manager = color_manager
+        self.color_manager.set_colors(ColorManager.NETWORK_COLORS)
+
         self.plot_view = PlotView(parent=self)
         self.network_view = NetworkView(parent=self)
         self.active_view = self.network_view
         self.stack = QStackedLayout()
         self.stack.addWidget(self.network_view)
         self.stack.addWidget(self.plot_view)
-        self.color_manager = color_manager
-        self.color_manager.set_colors(ColorManager.NETWORK_COLORS)
 
         container = QWidget()
         container.setLayout(self.stack)
