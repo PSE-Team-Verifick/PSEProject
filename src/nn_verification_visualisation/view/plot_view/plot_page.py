@@ -224,11 +224,15 @@ class PlotPage(Tab):
         card_layout.addWidget(plot_placeholder)
 
         footer = QWidget()
-        footer.setFixedHeight(50)
+        footer.setFixedHeight(40)
         footer_layout = QHBoxLayout(footer)
         footer_layout.setContentsMargins(0, 0, 0, 0)
 
-        footer_layout.addWidget(QLabel(title))
+        title_widget = QLabel(title)
+        title_widget.setObjectName("heading")
+
+        footer_layout.addSpacing(10)
+        footer_layout.addWidget(title_widget)
         footer_layout.addStretch(1)
         lock_button = QPushButton()
         lock_button.setObjectName("icon-button-tight")
