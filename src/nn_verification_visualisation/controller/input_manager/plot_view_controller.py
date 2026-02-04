@@ -51,10 +51,10 @@ class PlotViewController:
         else:
             selection.discard(pair_index)
 
-    def start_computation(self, config: PlotGenerationConfig):
-        return AlgorithmExecutor.execute_algorithm(AlgorithmExecutor, config)
-
-
+    def start_computation(self, plot_generation_configs: list[PlotGenerationConfig]):
+        for plot_generation_config in plot_generation_configs:
+            AlgorithmExecutor.execute_algorithm(AlgorithmExecutor(), plot_generation_config)
+        pass
 
     def change_tab(self, index: int):
         pass

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from nn_verification_visualisation.controller.process_manager.algorithm_executor import AlgorithmExecutor
 from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
 from nn_verification_visualisation.view.dialogs.neuron_picker import NeuronPicker
 from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
@@ -18,6 +19,7 @@ class PlotConfigDialog(ListDialogBase[PlotGenerationConfig]):
 
     def on_confirm_clicked(self):
         self.on_close()
+        self.parent_controller.start_computation(self.data)
 
     def get_title(self, item: PlotGenerationConfig) -> str:
         return "Plot: " + item.algorithm.name
