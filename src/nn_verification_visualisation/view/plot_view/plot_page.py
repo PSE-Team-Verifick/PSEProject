@@ -30,6 +30,8 @@ from nn_verification_visualisation.controller.input_manager.plot_view_controller
 from nn_verification_visualisation.view.plot_view.comparison_loading_widget import ComparisonLoadingWidget
 from nn_verification_visualisation.view.plot_view.plot_widget import PlotWidget
 from nn_verification_visualisation.view.base_view.tab import Tab
+from nn_verification_visualisation.view.dialogs.settings_dialog import SettingsDialog
+from nn_verification_visualisation.view.dialogs.settings_option import SettingsOption
 
 class PlotPage(Tab):
     controller: PlotViewController
@@ -61,6 +63,9 @@ class PlotPage(Tab):
         super().__init__("Example Tab", ":assets/icons/plot/chart.svg")
         # configuration is currently not implemented
         # self.configuration = configuration
+        SettingsDialog.add_setting(
+            SettingsOption("Plot Card Size", self.get_card_size_changer, "Plot View")
+        )
 
     def get_content(self) -> QWidget:
         container = QWidget()
@@ -119,20 +124,6 @@ class PlotPage(Tab):
         add_diagram_button = QPushButton("Add Diagram")
         add_diagram_button.clicked.connect(self.__add_diagram_from_current_bounds)
         layout.addWidget(add_diagram_button, alignment=Qt.AlignmentFlag.AlignLeft)
-
-        size_group = QGroupBox("Card Size")
-        size_layout = QVBoxLayout(size_group)
-        size_layout.setContentsMargins(6, 6, 6, 6)
-        size_layout.setSpacing(4)
-        # Temporary: will be replaced by persistent settings.
-        size_slider = QSlider(Qt.Orientation.Horizontal)
-        size_slider.setMinimum(320)
-        size_slider.setMaximum(560)
-        size_slider.setValue(self.controller.card_size)
-        size_slider.setSingleStep(10)
-        size_slider.valueChanged.connect(self.__on_card_size_changed)
-        size_layout.addWidget(size_slider)
-        layout.addWidget(size_group)
 
         node_pairs_group = QGroupBox("Node Pairs")
         node_pairs_layout = QVBoxLayout(node_pairs_group)
@@ -300,6 +291,15 @@ class PlotPage(Tab):
         for widget in self.plots:
             widget.setFixedSize(self.controller.card_size, self.controller.card_size)
         self.__relayout_plots()
+
+    def get_card_size_changer(self) -> QWidget:
+        size_slider = QSlider(Qt.Orientation.Horizontal)
+        size_slider.setMinimum(320)
+        size_slider.setMaximum(560)
+        size_slider.setValue(self.controller.card_size)
+        size_slider.setSingleStep(10)
+        size_slider.valueChanged.connect(self.__on_card_size_changed)
+        return size_slider
 
     def __register_node_pair(
         self, bounds: list[tuple[tuple[float, float], tuple[float, float]]]
