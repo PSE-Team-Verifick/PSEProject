@@ -8,10 +8,10 @@ from nn_verification_visualisation.view.plot_view.plot_page import PlotPage
 class PlotView(InsertView):
     controller: PlotViewController
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.controller = PlotViewController(self)
 
-        self.tabs.add_tab(PlotPage(None))
+        self.tabs.add_tab(PlotPage(self.controller))
 
         self.set_bar_icon_button(self.controller.open_plot_generation_dialog, ":assets/icons/add_icon.svg", Qt.Corner.TopRightCorner)

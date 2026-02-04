@@ -2,22 +2,26 @@ import random
 from typing import List, Callable
 
 from PySide6.QtGui import QColor, QPainter, QPen, QWheelEvent, QKeyEvent, QTransform, QPalette
-from PySide6.QtWidgets import QGraphicsView, QGraphicsScene
+from PySide6.QtWidgets import QGraphicsView, QGraphicsScene, QSlider
 from PySide6.QtCore import Qt, QVariantAnimation, QEasingCurve, QParallelAnimationGroup
 
 from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
 from nn_verification_visualisation.view.network_view.network_edge_batch import NetworkEdgeBatch
 from nn_verification_visualisation.view.network_view.network_node import NetworkNode
 
+from nn_verification_visualisation.view.dialogs.settings_dialog import SettingsDialog
+from nn_verification_visualisation.view.dialogs.settings_option import SettingsOption
+
 
 class NetworkWidget(QGraphicsView):
+
     configuration: NetworkVerificationConfig
     node_layers: List[List[NetworkNode]]
     scene: QGraphicsScene
     background_color: QColor
 
     nodes_selectable: bool
-    on_selection_changed: Callable[[List[NetworkNode]], None]
+    on_selection_changed: Callable[[int, int], QColor | None]
 
     height_to_width_ration: float = 1.0
     node_spacing = 90
@@ -27,14 +31,17 @@ class NetworkWidget(QGraphicsView):
     zoom_out_factor = 1 / 1.15
     padding_percentage = 0.5
 
-    def __init__(self, configuration: NetworkVerificationConfig, nodes_selectable: bool = False, on_selection_changed: Callable[[List[NetworkNode]], None] = None):
+    def __init__(self, configuration: NetworkVerificationConfig, nodes_selectable: bool = False, on_selection_changed: Callable[[int, int], QColor | None] = None):
         super().__init__()
         self.setFrameStyle(0)
-        self.background_color = self.palette().color(QPalette.Base)
+        self.background_color = self.palette().color(QPalette.ColorRole.Base)
         self.configuration = configuration
 
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
+
+        self.nodes_selectable = nodes_selectable
+        self.on_selection_changed = on_selection_changed
 
         self.setBackgroundBrush(self.background_color)
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
@@ -57,6 +64,24 @@ class NetworkWidget(QGraphicsView):
 
         # Initial View
         self.fitInView(self.scene.itemsBoundingRect(), Qt.AspectRatioMode.KeepAspectRatio)
+
+        SettingsDialog.add_setting(SettingsOption("Network Height To Width Ratio", self.get_height_to_width_changer, f"Network Display: {self.configuration.network.name}"))
+
+    def get_height_to_width_changer(self):
+        slider = QSlider(Qt.Orientation.Horizontal)
+        slider.setRange(5, 20)
+        current_value = int(self.height_to_width_ration * 10)
+        slider.setValue(current_value)
+        slider.valueChanged.connect(self.height_to_width_changed)
+
+        return slider
+
+    def height_to_width_changed(self, value: int):
+        self.height_to_width_ration = value / 10
+        self.node_layers = []
+        self.scene.clear()
+        self.__build_network()
+
 
     def __build_network(self):
         layers = self.configuration.layers_dimensions
@@ -112,16 +137,16 @@ class NetworkWidget(QGraphicsView):
 
         self.scene.setSceneRect(self.scene.itemsBoundingRect())
 
-    def selection_changed(self):
-        if not self.on_selection_changed:
-            return
-        selected_nodes: List[NetworkNode] = [item for item in self.scene.selectedItems() if isinstance(item, NetworkNode)]
-        self.on_selection_changed(selected_nodes)
-
     def _on_node_clicked(self, position: tuple[int, int]) -> None:
+        if not self.nodes_selectable:
+            return
         layer, index = position
         print(f"Clicked Node: Layer {layer}, Index {index}")
-        # You can emit a signal here or update a side panel
+        if self.on_selection_changed:
+            new_color = self.on_selection_changed(layer, index)
+            if new_color is None:
+                return
+            self.node_layers[layer][index].setBrush(new_color)
 
     def __update_view_constraints(self):
         content_rect = self.scene.itemsBoundingRect()
@@ -178,6 +203,12 @@ class NetworkWidget(QGraphicsView):
 
         self.centerOn(target_scene_pos)
         self.anim_group.start()
+
+    def unselect_node(self, layer_index: int, node_index: int):
+        self.node_layers[layer_index][node_index].setBrush(NetworkNode.color_unselected)
+
+    def select_node(self, layer_index: int, node_index: int, color: QColor):
+        self.node_layers[layer_index][node_index].setBrush(color)
 
     def keyPressEvent(self, event: QKeyEvent):
         """
