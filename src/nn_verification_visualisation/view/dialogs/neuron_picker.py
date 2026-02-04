@@ -60,11 +60,17 @@ class NeuronPicker(DialogBase):
     bounds_selector: QComboBox | None
     max_bounds_display_inputs: int
 
-    def __init__(self, on_close: Callable[[], None], num_neurons: int = 2):
+    def __init__(self, on_close: Callable[[], None], num_neurons: int = 2, preset: PlotGenerationConfig | None = None):
+        if preset is not None:
+            nn_path = preset.nnconfig.network.path
+            nn_index = [i for i in range(len(Storage.networks)) if Storage.networks[i].network.path == nn_path][0]
+            nn_index = 0 if not nn_index else nn_index
+            self.current_network = nn_index
+        else:
+            self.current_network = 0
+            self.current_algorithm = ""
+            self.current_neurons = [(0, 0) for _ in range(num_neurons)]
         self.num_neurons = num_neurons
-        self.current_network = 0
-        self.current_algorithm = ""
-        self.current_neurons = [(0, 0) for _ in range(num_neurons)]
         self.node_spin_boxes = []
         self.max_neuron_num_per_layer = []
         self.parameters = []

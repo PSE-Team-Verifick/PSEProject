@@ -57,7 +57,7 @@ class ListDialogBase(Generic[T], DialogBase):
 
         if self.has_edit:
             edit_button = QPushButton("Edit")
-            edit_button.clicked.connect(self.on_edit_clicked)
+            edit_button.clicked.connect(self.__internal_on_edit_clicked)
             button_bar_layout.addWidget(edit_button)
 
         remove_button = QPushButton("Remove")
@@ -89,4 +89,14 @@ class ListDialogBase(Generic[T], DialogBase):
             self.list_widget.takeItem(self.list_widget.row(item))
             self.data.pop(index)
             # self.list_widget.show()
+
+    def __internal_on_edit_clicked(self) -> None:
+        list_items = self.list_widget.selectedItems()
+        list_indices = self.list_widget.selectedIndexes()
+        if not list_items or len(list_items) != 1:
+            return
+        index = list_indices[0].row()
+        edited_item = self.on_edit_clicked(self.data[index])
+        if edited_item is not None:
+            self.data[index] = edited_item
 
