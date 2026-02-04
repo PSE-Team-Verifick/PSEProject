@@ -194,6 +194,7 @@ class PlotPage(Tab):
         card_layout.setSpacing(6)
 
         plot_placeholder = QFrame()
+        plot_placeholder.setObjectName("plot-container")
         plot_placeholder.setFrameShape(QFrame.Shape.StyledPanel)
         plot_placeholder.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         plot_layout = QVBoxLayout(plot_placeholder)
@@ -202,6 +203,7 @@ class PlotPage(Tab):
 
         figure = Figure(figsize=(3.2, 2.4))
         canvas = FigureCanvas(figure)
+
         canvas.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         toolbar = NavigationToolbar(canvas, plot_placeholder)
 
@@ -225,14 +227,21 @@ class PlotPage(Tab):
         footer.setFixedHeight(40)
         footer_layout = QHBoxLayout(footer)
         footer_layout.setContentsMargins(0, 0, 0, 0)
-        footer_layout.setSpacing(6)
 
-        footer_layout.addWidget(QLabel(title))
+        title_widget = QLabel(title)
+        title_widget.setObjectName("heading")
+
+        footer_layout.addSpacing(10)
+        footer_layout.addWidget(title_widget)
         footer_layout.addStretch(1)
-        lock_button = QPushButton("Lock")
+        lock_button = QPushButton()
+        lock_button.setObjectName("icon-button-tight")
+        lock_button.setIcon(QIcon(":assets/icons/plot/unlocked.svg"))
         lock_button.clicked.connect(lambda: self.__toggle_lock(card, lock_button))
         footer_layout.addWidget(lock_button)
-        fullscreen_button = QPushButton("Fullscreen")
+        fullscreen_button = QPushButton()
+        fullscreen_button.setObjectName("icon-button-tight")
+        fullscreen_button.setIcon(QIcon(":assets/icons/plot/fullscreen.svg"))
         fullscreen_button.clicked.connect(lambda: self.fullscreen(card))
         footer_layout.addWidget(fullscreen_button)
 
@@ -280,7 +289,11 @@ class PlotPage(Tab):
 
     def __toggle_lock(self, widget: PlotWidget, button: QPushButton):
         widget.locked = not getattr(widget, "locked", False)
-        button.setText("Unlock" if widget.locked else "Lock")
+        if widget.locked:
+            button.setIcon(QIcon(":assets/icons/plot/locked.svg"))
+        else:
+            button.setIcon(QIcon(":assets/icons/plot/unlocked.svg"))
+
 
     def __on_card_size_changed(self, value: int):
         self.controller.set_card_size(value)
