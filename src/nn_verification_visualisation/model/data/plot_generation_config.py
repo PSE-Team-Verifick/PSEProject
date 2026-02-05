@@ -16,9 +16,11 @@ class PlotGenerationConfig:
     algorithm: Algorithm
     selected_neurons: List[tuple[int, int]]
     parameters: List[str]
+    bounds_index: int
 
-    def __init__(self, nnconfig: NetworkVerificationConfig, algorithm: Algorithm, selected_neurons: List[tuple[int, int]], parameters: List[str]):
+    def __init__(self, nnconfig: NetworkVerificationConfig, algorithm: Algorithm, selected_neurons: List[tuple[int, int]], parameters: List[str], bounds_index: int = -1):
         self.nnconfig = nnconfig
         self.algorithm = algorithm
         self.selected_neurons = selected_neurons
         self.parameters = parameters
+        self.bounds_index = bounds_index

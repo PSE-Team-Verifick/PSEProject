@@ -4,9 +4,8 @@ from typing import List
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QWidget, QPushButton, QMenu, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QWidget, QPushButton, QMenu, QGraphicsDropShadowEffect, QApplication, QMainWindow
 
-from nn_verification_visualisation.view.base_view.action_menu_item import ActionMenuItem
 from nn_verification_visualisation.view.dialogs.info_popup import InfoPopup
 from nn_verification_visualisation.view.dialogs.info_type import InfoType
 
@@ -19,7 +18,6 @@ if TYPE_CHECKING:
 
 
 class ActionMenu(QWidget):
-    items: List[ActionMenuItem]
 
     def __init__(self, parent: InsertView):
         super().__init__()
@@ -46,18 +44,19 @@ class ActionMenu(QWidget):
     def __settings_action(self):
         settings_dialog = SettingsDialog(self.parent.close_dialog)
         self.parent.open_dialog(settings_dialog)
-        print("settings")
 
     def __exit_action(self):
+        """
+        Closes the main window of the application
+        """
+        app = QApplication.instance()
+        main_window = None
 
-        cancel_button = QPushButton("Cancel")
-        cancel_button.setObjectName("light-button")
-        confirm_button = QPushButton("Continue")
-        confirm_button.setObjectName("error-button")
-        confirm_button.clicked.connect(lambda: sys.exit())
+        # Find the MainWindow instance
+        for widget in app.topLevelWidgets():
+            if isinstance(widget, QMainWindow):
+                main_window = widget
+                break
 
-        buttons = [cancel_button, confirm_button]
-        text = "Do you really want to exit the program?"
-        dialog = InfoPopup(self.parent.close_dialog, format(text), InfoType.WARNING, buttons)
-
-        self.parent.open_dialog(dialog)
+        if main_window:
+            main_window.close()
