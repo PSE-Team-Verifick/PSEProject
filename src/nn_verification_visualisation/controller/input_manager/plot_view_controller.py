@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nn_verification_visualisation.model.data.algorithm_file_observer import AlgorithmFileObserver
+from nn_verification_visualisation.model.data_loader.algorithm_file_observer import AlgorithmFileObserver
 from nn_verification_visualisation.model.data.diagram_config import DiagramConfig
-from nn_verification_visualisation.model.data.plot import Plot
 from nn_verification_visualisation.view.dialogs.plot_config_dialog import PlotConfigDialog
 
 if TYPE_CHECKING:
