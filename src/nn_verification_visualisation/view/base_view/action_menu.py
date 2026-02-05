@@ -46,7 +46,6 @@ class ActionMenu(QWidget):
     def __settings_action(self):
         settings_dialog = SettingsDialog(self.parent.close_dialog)
         self.parent.open_dialog(settings_dialog)
-        print("settings")
 
     def __exit_action(self):
 
