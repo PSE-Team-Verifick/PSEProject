@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from nn_verification_visualisation.controller.process_manager.algorithm_executor import AlgorithmExecutor
 from nn_verification_visualisation.model.data_loader.algorithm_file_observer import AlgorithmFileObserver
 from nn_verification_visualisation.model.data.diagram_config import DiagramConfig
@@ -55,9 +57,18 @@ class PlotViewController:
             if not execution_res.is_success:
                 print(f"Could not execute algorithm: {execution_res.error}")
                 continue
-            output_bounds, directions = execution_res.data
+            output_bound_np, directions = execution_res.data
+            if output_bound_np.shape[1] != 2:
+                print(f"Algorithm returned false bounds: {output_bound_np}")
+            output_bounds = []
+            for bounds in output_bound_np.tolist():
+                output_bounds.append((bounds[0], bounds[1]))
+            print(f"Got bounds: {output_bounds}")
             polygons.append(self.compute_polygon(output_bounds, directions))
+            print(f"Computed polygon: {polygons[-1]}")
+
         diagram_config = DiagramConfig(plot_generation_configs,polygons)
+        print("Generated Diagram Config")
         storage = Storage()
         storage.diagrams.append(diagram_config)
         self.current_plot_view.add_plot_tab(diagram_config)

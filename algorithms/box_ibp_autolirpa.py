@@ -16,7 +16,8 @@ def calculate_output_bounds(onnx_model, input_bounds: np.ndarray) -> np.ndarray:
         from auto_LiRPA import BoundedModule, BoundedTensor
         from auto_LiRPA.perturbations import PerturbationLpNorm
     except Exception as e:
-        raise ImportError("auto_LiRPA + torch + onnx2pytorch are required.") from e
+        print(e)
+        raise ImportError("auto_LiRPA + torch + onnx2pytorch + tqdm are required.") from e
 
     # ONNX -> PyTorch
     torch_model = ConvertModel(onnx_model).eval()

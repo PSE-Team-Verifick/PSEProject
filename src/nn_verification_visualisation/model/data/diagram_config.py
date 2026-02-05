@@ -11,13 +11,10 @@ class DiagramConfig:
     '''
     Data object for a single plot page. Contains plot figures and algorithm output bounds.
     '''
-    plot_generation_configs : list[PlotGenerationConfig] = []
-    polygons : list[list[tuple[float, float]]] = []
-    plots: list[list[int]] = []
+    plot_generation_configs : list[PlotGenerationConfig]
+    polygons : list[list[tuple[float, float]]]
+    plots: list[list[int]]
     def __init__(self, plot_generation_configs: list[PlotGenerationConfig], polygons: list[list[tuple[float,float]]]) -> None:
         self.plot_generation_configs = plot_generation_configs
         self.polygons = polygons
-
-        # generates default plots
-        for i in range(0, len(polygons)):
-            self.plots.append([i])
+        self.plots = []

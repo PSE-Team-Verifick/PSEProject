@@ -20,7 +20,8 @@ class PlotConfigDialog(ListDialogBase[PlotGenerationConfig]):
 
     def on_confirm_clicked(self):
         self.on_close()
-        self.parent_controller.start_computation(self.data)
+        if len(self.data) > 0:
+            self.parent_controller.start_computation(self.data)
 
     def get_title(self, item: PlotGenerationConfig) -> str:
         return "Plot: " + item.algorithm.name

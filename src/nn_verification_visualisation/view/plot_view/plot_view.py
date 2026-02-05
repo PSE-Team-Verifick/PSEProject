@@ -16,8 +16,6 @@ class PlotView(InsertView):
         super().__init__(parent)
         self.controller = PlotViewController(self)
 
-        self.tabs.add_tab(PlotPage(self.controller))
-
         add_button = self._create_simple_icon_button(self.controller.open_plot_generation_dialog, ":assets/icons/add_icon.svg")
 
         view_toggle_button = QPushButton()

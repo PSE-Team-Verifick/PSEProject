@@ -18,7 +18,7 @@ class AlgorithmFileObserver(FileSystemEventHandler):
     def __init__(self):
         # figuring out the algorithms directory
         current_dir = Path(__file__).parent.resolve()
-        self.watch_dir = (current_dir.parents[3] / "TestAlgo")
+        self.watch_dir = (current_dir.parents[3] / "algorithms")
 
         if not self.watch_dir.exists():
             print(f"Could not find algorithm directory at: {self.watch_dir}")
