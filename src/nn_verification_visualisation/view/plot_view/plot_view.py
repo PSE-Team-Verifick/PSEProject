@@ -25,3 +25,10 @@ class PlotView(InsertView):
         view_toggle_button.setIcon(QIcon(":assets/icons/plot/switch.svg"))
 
         self.set_bar_corner_widgets([add_button, view_toggle_button],Qt.Corner.TopRightCorner, width=110)
+
+    def add_plot_tab(self, polygons: list[list[tuple[float, float]]]):
+        '''
+        Adds a plot tab to the QTabWidget. Only updates UI, not the backend.
+        :param polygons: Data object of the new tab.
+        '''
+        self.tabs.add_tab(PlotPage(self.controller, polygons))

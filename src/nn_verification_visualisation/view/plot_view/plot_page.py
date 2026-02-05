@@ -49,7 +49,7 @@ class PlotPage(Tab):
     __node_pairs_list: QListWidget | None
     __node_pairs_layout: QVBoxLayout | None
 
-    def __init__(self, controller: PlotViewController, polygons:list[list[tuple[float, float]]]):
+    def __init__(self, controller: PlotViewController, polygons:list[list[tuple[float, float]]] = None):
 
         self.__syncing = False
         self.__scroll_area = None
