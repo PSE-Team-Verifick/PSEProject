@@ -28,7 +28,7 @@ class ListDialogBase(Generic[T], DialogBase):
         pass
 
     # abstract
-    def on_edit_clicked(self, item: T) -> T | None:
+    def on_edit_clicked(self, item: T) -> None:
         pass
 
     # abstract
@@ -96,7 +96,4 @@ class ListDialogBase(Generic[T], DialogBase):
         if not list_items or len(list_items) != 1:
             return
         index = list_indices[0].row()
-        edited_item = self.on_edit_clicked(self.data[index])
-        if edited_item is not None:
-            self.data[index] = edited_item
-
+        self.on_edit_clicked(self.data[index])
