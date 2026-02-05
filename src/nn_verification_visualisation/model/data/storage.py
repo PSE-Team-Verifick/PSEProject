@@ -1,6 +1,6 @@
 from typing import List, Callable
 
-from torch.fx.experimental.proxy_tensor import selective_decompose
+#from torch.fx.experimental.proxy_tensor import selective_decompose
 
 from nn_verification_visualisation.model.data.algorithm import Algorithm
 from nn_verification_visualisation.model.data.diagram_config import DiagramConfig
