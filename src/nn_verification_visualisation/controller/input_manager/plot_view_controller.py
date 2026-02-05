@@ -3,9 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nn_verification_visualisation.controller.process_manager.algorithm_executor import AlgorithmExecutor
-from nn_verification_visualisation.model.data.algorithm_file_observer import AlgorithmFileObserver
+from nn_verification_visualisation.model.data_loader.algorithm_file_observer import AlgorithmFileObserver
 from nn_verification_visualisation.model.data.diagram_config import DiagramConfig
-from nn_verification_visualisation.model.data.plot import Plot
 from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
 from nn_verification_visualisation.model.data.storage import Storage
 from nn_verification_visualisation.view.dialogs.plot_config_dialog import PlotConfigDialog
@@ -52,13 +51,16 @@ class PlotViewController:
     def start_computation(self, plot_generation_configs: list[PlotGenerationConfig]):
         polygons = []
         for plot_generation_config in plot_generation_configs:
-            output_bounds, directions = AlgorithmExecutor.execute_algorithm(AlgorithmExecutor(), plot_generation_config).data
+            execution_res = AlgorithmExecutor.execute_algorithm(AlgorithmExecutor(), plot_generation_config)
+            if not execution_res.is_success:
+                print(f"Could not execute algorithm: {execution_res.error}")
+                continue
+            output_bounds, directions = execution_res.data
             polygons.append(self.compute_polygon(output_bounds, directions))
         diagram_config = DiagramConfig(plot_generation_configs,polygons)
         storage = Storage()
         storage.diagrams.append(diagram_config)
         self.current_plot_view.add_plot_tab(diagram_config)
-
 
     def change_tab(self, index: int):
         pass

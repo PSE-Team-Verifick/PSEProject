@@ -13,7 +13,11 @@ class DiagramConfig:
     '''
     plot_generation_configs : list[PlotGenerationConfig] = []
     polygons : list[list[tuple[float, float]]] = []
-    plots: Dict[int, Plot] = {}
+    plots: list[list[int]] = []
     def __init__(self, plot_generation_configs: list[PlotGenerationConfig], polygons: list[list[tuple[float,float]]]) -> None:
         self.plot_generation_configs = plot_generation_configs
         self.polygons = polygons
+
+        # generates default plots
+        for i in range(0, len(polygons)):
+            self.plots.append([i])

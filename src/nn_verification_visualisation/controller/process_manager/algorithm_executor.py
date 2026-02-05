@@ -10,7 +10,7 @@ from nn_verification_visualisation.utils.result import Result, Success, Failure
 
 
 class AlgorithmExecutor:
-    def execute_algorithm(self, config: PlotGenerationConfig):
+    def execute_algorithm(self, config: PlotGenerationConfig) -> Result[tuple[np.ndarray, list[tuple[float, float]]]]:
         try:
             model = config.nnconfig.network.model
 

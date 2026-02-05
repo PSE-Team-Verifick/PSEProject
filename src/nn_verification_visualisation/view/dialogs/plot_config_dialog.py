@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from nn_verification_visualisation.controller.process_manager.algorithm_executor import AlgorithmExecutor
-from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
 from nn_verification_visualisation.utils.result import Result
 from nn_verification_visualisation.view.dialogs.info_popup import InfoPopup
 from nn_verification_visualisation.view.dialogs.info_type import InfoType

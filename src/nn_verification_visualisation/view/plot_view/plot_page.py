@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QSlider,
     QSpacerItem,
     QVBoxLayout,
-    QWidget,
+    QWidget, QListWidgetItem,
 )
 import numpy as np
 from matplotlib.figure import Figure
@@ -34,18 +34,23 @@ from nn_verification_visualisation.view.base_view.tab import Tab
 from nn_verification_visualisation.view.dialogs.settings_dialog import SettingsDialog
 from nn_verification_visualisation.view.dialogs.settings_option import SettingsOption
 
+class PlotSettingsWidget(QWidget):
+    def __init__(self, parent = None):
+        super().__init__(parent)
+
 class PlotPage(Tab):
+    plot_widgets: list[PlotWidget]
+    plot_setting_widgets: list[PlotSettingsWidget]
+
     controller: PlotViewController
     configuration: DiagramConfig
-    plots: List[PlotWidget]
     locked: List[PlotWidget]
     __plot_grid: QGridLayout
-    __plot_map: dict[str, PlotWidget]
     __syncing: bool
     __scroll_area: QScrollArea | None
     __grid_host: QWidget | None
     __bottom_spacer_height: int
-    __diagram_groups_layout: QVBoxLayout | None
+    __plots_sidebar_layout: QVBoxLayout
     __node_pairs_list: QListWidget | None
     __node_pairs_layout: QVBoxLayout | None
     node_pairs: list[list[tuple[int,int]]]
@@ -55,11 +60,6 @@ class PlotPage(Tab):
         self.__scroll_area = None
         self.__grid_host = None
         self.__bottom_spacer_height = 32
-        self.plots = []
-        self.__plot_map = {}
-        self.__diagram_groups_layout = None
-        self.__node_pairs_list = None
-        self.__node_pairs_layout = None
         self.controller = controller
         self.node_pairs =  []
         if diagram_config:
@@ -70,11 +70,27 @@ class PlotPage(Tab):
             self._polygons = None
 
         super().__init__("Example Tab", ":assets/icons/plot/chart.svg")
+
+        # add start plots
+        for plot in self.configuration.plots:
+            self.__add_plot(plot)
+
         # configuration is currently not implemented
         # self.configuration = configuration
         SettingsDialog.add_setting(
             SettingsOption("Plot Card Size", self.get_card_size_changer, "Plot View")
         )
+
+    def __add_plot(self, plot: list[int]):
+        # add diagram to DiagramConfig
+        self.configuration.plots.append(plot)
+
+        # add sidebar panel
+        settings_widget = PlotSettingsWidget()
+        self.__plots_sidebar_layout.addWidget(settings_widget)
+
+        # add main panel
+
 
     def get_content(self) -> QWidget:
         container = QWidget()
@@ -96,8 +112,6 @@ class PlotPage(Tab):
         self.__plot_grid.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self.__grid_host = grid_host
 
-        self.plots = []
-        self.__plot_map = {}
 
         if self._polygons:
             for index, polygon in enumerate(self._polygons, start=1):
@@ -134,30 +148,15 @@ class PlotPage(Tab):
         title.setObjectName("title")
         layout.addWidget(title)
 
-        self.__diagram_groups_layout = QVBoxLayout()
-        self.__diagram_groups_layout.setContentsMargins(0, 0, 0, 0)
-        self.__diagram_groups_layout.setSpacing(8)
-        layout.addLayout(self.__diagram_groups_layout)
-        self.__rebuild_diagram_groups()
+        self.__plots_sidebar_layout = QVBoxLayout()
+        self.__plots_sidebar_layout.setContentsMargins(0, 0, 0, 0)
+        self.__plots_sidebar_layout.setSpacing(8)
+        layout.addLayout(self.__plots_sidebar_layout)
 
         add_diagram_button = QPushButton("Add Diagram")
         add_diagram_button.clicked.connect(self.__add_diagram_from_current_bounds)
         layout.addWidget(add_diagram_button, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        node_pairs_group = QGroupBox("Node Pairs")
-        node_pairs_layout = QVBoxLayout(node_pairs_group)
-        node_pairs_layout.setContentsMargins(6, 6, 6, 6)
-        node_pairs_layout.setSpacing(4)
-        self.__node_pairs_layout = node_pairs_layout
-        self.__node_pairs_list = QListWidget()
-        node_pairs_layout.addWidget(self.__node_pairs_list)
-        node_pairs_layout.addSpacing(5)
-
-        remove_pair_button = QPushButton("Remove Selected Pair")
-        remove_pair_button.clicked.connect(self.__remove_selected_pair)
-        node_pairs_layout.addWidget(remove_pair_button)
-        self.__refresh_node_pairs_list()
-        layout.addWidget(node_pairs_group)
 
         layout.addStretch(1)
 
@@ -297,38 +296,6 @@ class PlotPage(Tab):
         spacer = QSpacerItem(0, self.__bottom_spacer_height, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         self.__plot_grid.addItem(spacer, spacer_row, 0, 1, columns)
 
-    def add_node_pair(self, bounds: list[tuple[tuple[float, float], tuple[float, float]]]) -> int:
-        pair_index = len(self.node_pairs)
-        self.node_pairs.append(f"Node Pair {pair_index + 1}")
-        self.node_pair_bounds.append(bounds)
-        palette = [
-            ("#59aef2", "#3b6ea8"),
-            ("#7cc38d", "#3d7b57"),
-            ("#f0b76f", "#a36b28"),
-            ("#c08fd6", "#6e4d8c"),
-            ("#f28fa2", "#9d3f50"),
-            ("#7bd1d1", "#3a7a7a"),
-        ]
-        self.node_pair_colors.append(palette[pair_index % len(palette)])
-        return pair_index
-
-    def remove_node_pair(self, index: int):
-        if index < 0 or index >= len(self.node_pair_bounds):
-            return
-        del self.node_pairs[index]
-        del self.node_pair_bounds[index]
-        if index < len(self.node_pair_colors):
-            del self.node_pair_colors[index]
-        for title, selection in self.diagram_selections.items():
-            updated = set()
-            for idx in selection:
-                if idx == index:
-                    continue
-                if idx > index:
-                    updated.add(idx - 1)
-                else:
-                    updated.add(idx)
-            self.diagram_selections[title] = updated
 
     def __toggle_lock(self, widget: PlotWidget, button: QPushButton):
         widget.locked = not getattr(widget, "locked", False)
@@ -353,35 +320,13 @@ class PlotPage(Tab):
         size_slider.valueChanged.connect(self.__on_card_size_changed)
         return size_slider
 
-    def __register_node_pair(
-        self, bounds: list[tuple[tuple[float, float], tuple[float, float]]]
-    ) -> int:
-        pair_index = self.controller.add_node_pair(bounds)
-        self.__refresh_node_pairs_list()
-        self.__rebuild_diagram_groups()
-        return pair_index
-
-    def __refresh_node_pairs_list(self):
-        if self.__node_pairs_list is None:
-            return
-        self.__node_pairs_list.clear()
-        self.__node_pairs_list.addItems(self.controller.get_node_pairs())
-
-    def __remove_selected_pair(self):
-        if self.__node_pairs_list is None:
-            return
-        row = self.__node_pairs_list.currentRow()
-        self.controller.remove_node_pair(row)
-        self.__refresh_node_pairs_list()
-        self.__rebuild_diagram_groups()
-        for plot in self.plots:
-            self.__render_plot(plot)
-
     def __rebuild_diagram_groups(self):
-        if self.__diagram_groups_layout is None:
+        if self.__plots_sidebar_layout is None:
             return
-        while self.__diagram_groups_layout.count():
-            item = self.__diagram_groups_layout.takeAt(0)
+
+        # clear old diagram widgets
+        while self.__plots_sidebar_layout.count():
+            item = self.__plots_sidebar_layout.takeAt(0)
             widget = item.widget()
             if widget is not None:
                 widget.setParent(None)
@@ -414,7 +359,7 @@ class PlotPage(Tab):
                     lambda state, t=title, i=idx: self.__on_pair_toggled(t, i, state)
                 )
                 group_layout.addWidget(check_box)
-            self.__diagram_groups_layout.addWidget(group)
+            self.__plots_sidebar_layout.addWidget(group)
 
     def __on_pair_toggled(self, plot_title: str, pair_index: int, state: int):
         self.controller.change_plot(
@@ -500,16 +445,6 @@ class PlotPage(Tab):
         )
         plot.limit_callback_ids = cids
 
-    def __add_diagram_from_current_bounds(self):
-        title = f"Diagram {len(self.plots) + 1:02d}"
-        plot_card = self.__create_plot_card(title)
-        self.plots.append(plot_card)
-        self.__plot_map[title] = plot_card
-        self.controller.register_plot(title)
-        self.__render_plot(plot_card)
-        self.__rebuild_diagram_groups()
-        self.__relayout_plots()
-
     def __on_limits_changed(self, source: PlotWidget):
         if self.__syncing or not getattr(source, "locked", False):
             return
@@ -536,3 +471,4 @@ class PlotPage(Tab):
         if watched is self.__scroll_area.viewport() and event.type() == QEvent.Type.Resize:
             self.__relayout_plots()
         return super().eventFilter(watched, event)
+
