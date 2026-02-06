@@ -183,6 +183,7 @@ QCheckBox::indicator:checked {
 
 QScrollArea {
     background-color: transparent;
+    border-radius: 10px;
 }
 
 
