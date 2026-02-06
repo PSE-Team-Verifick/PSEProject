@@ -26,7 +26,7 @@ class PlotConfigDialog(ListDialogBase[PlotGenerationConfig]):
         config = []
         self.on_accept = None
         if has_preset:
-            config = preset[0]
+            config = preset[0].copy()
             self.on_accept = preset[1]
 
         super().__init__(controller.current_plot_view.close_dialog, "Create Neuron Pairs", config, True)

@@ -7,10 +7,12 @@ from PySide6.QtGui import QIcon
 from nn_verification_visualisation.controller.input_manager.plot_view_controller import PlotViewController
 from nn_verification_visualisation.model.data.diagram_config import DiagramConfig
 from nn_verification_visualisation.view.base_view.insert_view import InsertView
+from nn_verification_visualisation.view.base_view.tutorial_speech_bubble import TutorialSpeechBubble
 from nn_verification_visualisation.view.dialogs.settings_dialog import SettingsDialog
 from nn_verification_visualisation.view.dialogs.settings_option import SettingsOption
 from nn_verification_visualisation.view.plot_view.plot_page import PlotPage
 from nn_verification_visualisation.model.data.storage import Storage
+
 
 class PlotView(InsertView):
     controller: PlotViewController
@@ -25,15 +27,15 @@ class PlotView(InsertView):
         for diagram in Storage().diagrams:
             self.add_plot_tab(diagram)
 
-
-        add_button = self._create_simple_icon_button(self.controller.open_plot_generation_dialog, ":assets/icons/add_icon.svg")
+        add_button = self._create_simple_icon_button(self.controller.open_plot_generation_dialog,
+                                                     ":assets/icons/add_icon.svg")
 
         view_toggle_button = QPushButton()
         view_toggle_button.clicked.connect(change_view)
         view_toggle_button.setObjectName("switch-button")
         view_toggle_button.setIcon(QIcon(":assets/icons/plot/switch.svg"))
 
-        self.set_bar_corner_widgets([add_button, view_toggle_button],Qt.Corner.TopRightCorner, width=110)
+        self.set_bar_corner_widgets([add_button, view_toggle_button], Qt.Corner.TopRightCorner, width=110)
 
     def add_plot_tab(self, diagram_config: DiagramConfig):
         '''
@@ -41,11 +43,16 @@ class PlotView(InsertView):
         :param polygons: Data object of the new tab.
         '''
         self.tabs.add_tab(PlotPage(self.controller, diagram_config))
-        
+
+    def get_default_tab(self) -> QWidget | None:
+        text = "1. Use the edit icon in the top right corner to add new comparisons.\n\n2. Select different neuron pairs with networks, algorithms and specific nodes.\n\n3. Let the algorithms calculate the output bounds from the given pairs.\n\n4. View the results and compare them."
+        return TutorialSpeechBubble("Quick Tutorial", text)
+
     def showEvent(self, event, /):
         super().showEvent(event)
-        self.settings_remover = SettingsDialog.add_setting(SettingsOption("Numer of Directions", self.get_num_directions_changer, "Plot View"))
-    
+        self.settings_remover = SettingsDialog.add_setting(
+            SettingsOption("Numer of Directions", self.get_num_directions_changer, "Plot View"))
+
     def hideEvent(self, event, /):
         super().hideEvent(event)
         if self.settings_remover:
@@ -55,6 +62,7 @@ class PlotView(InsertView):
     def get_num_directions_changer(self) -> QWidget:
         def on_change(value):
             Storage().num_directions = value
+
         changer = QSpinBox()
         changer.setRange(0, 10000)
         changer.setValue(Storage().num_directions)
