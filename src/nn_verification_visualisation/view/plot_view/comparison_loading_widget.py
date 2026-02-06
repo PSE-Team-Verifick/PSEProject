@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List, Callable, TYPE_CHECKING
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QPushButton, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QPushButton, QHBoxLayout, QApplication
 
 if TYPE_CHECKING:
     from nn_verification_visualisation.controller.input_manager.plot_view_controller import PlotViewController
@@ -37,7 +37,6 @@ class ComparisonLoadingWidget(Tab):
 
         self.on_update.connect(lambda x: self.loading_updated(x[0], x[1]))
 
-        print("CREATED INSTANCE")
 
     def get_content(self) -> QWidget:
         content = QWidget()
@@ -83,10 +82,12 @@ class ComparisonLoadingWidget(Tab):
         self.__controller.create_diagram_tab(self)
 
     def loading_updated(self, index: int, result: Result):
+        QApplication.processEvents()
         loader = self.__loaders[index]
         loader.set_status(Status.Done if result.is_success else Status.Failed)
         if not result.is_success:
             loader.error = result.error
+        QApplication.processEvents()
 
     def loading_finished(self):
         self.__create_diagram_button.setVisible(True)

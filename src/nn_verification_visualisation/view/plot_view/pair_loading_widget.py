@@ -1,5 +1,6 @@
 from typing import Callable
 
+from PySide6.QtCore import QThread
 from PySide6.QtSvgWidgets import QSvgWidget
 from PySide6.QtWidgets import QPushButton, QLabel, QHBoxLayout, QFrame
 from nn_verification_visualisation.view.plot_view.status import Status
@@ -49,9 +50,6 @@ class PairLoadingWidget(QFrame):
         self.setFixedHeight(50)
         self.setLayout(container_layout)
 
-
-        print("CREATED PAIR")
-
     def set_status(self, status: Status):
         '''
         Function to internally and externally update the status of the widget.
@@ -70,15 +68,13 @@ class PairLoadingWidget(QFrame):
             case Status.Done:
                 self.__button.setVisible(False)
                 status = "Completed"
-                print("LOADING")
                 self.__icon.load(":assets/icons/check.svg")
-                print("LOADED")
-                self.setParent(None)
             case Status.Failed:
                 self.__button.setVisible(True)
                 self.__button.setText("Show Error")
                 self.__button.setObjectName("error-button")
                 self.__icon.load(":assets/icons/error.svg")
+
                 status = "Error"
         self.__title.setText("{} - {}".format(self.__name, status))
 
@@ -86,7 +82,3 @@ class PairLoadingWidget(QFrame):
         self.__button.style().polish(self.__button)
         self.__button.update()
 
-        self.__icon.setStyleSheet("color:red")
-
-
-        pass

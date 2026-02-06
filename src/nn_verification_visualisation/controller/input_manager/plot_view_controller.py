@@ -6,6 +6,7 @@ from time import sleep
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QTimer, SignalInstance, QMetaObject, Qt
+from PySide6.QtWidgets import QApplication
 from onnx import ModelProto
 
 import numpy as np
@@ -132,12 +133,11 @@ class PlotViewController:
 
                     polygons[result_index] = self.compute_polygon(bounds_list, directions_list)
                 else:
-                    logger.error(f"Algorithm {index} failed: {result.error}")
+                    logger.error(f"Algorithm {result_index} failed: {result.error}")
 
                 results_received += 1
-                loading_screen.on_update.emit((index, result))
+                loading_screen.on_update.emit((result_index, result))
 
-            sleep(1)
             loading_screen.loading_finished()
             logger.info("All computations finished/cancelled.")
 
