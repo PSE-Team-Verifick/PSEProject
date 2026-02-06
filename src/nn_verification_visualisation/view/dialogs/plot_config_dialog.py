@@ -3,6 +3,8 @@ from __future__ import annotations
 from logging import Logger
 from typing import TYPE_CHECKING, Callable
 
+from PySide6.QtWidgets import QPushButton
+
 from nn_verification_visualisation.utils.result import Result
 from nn_verification_visualisation.view.dialogs.info_popup import InfoPopup
 from nn_verification_visualisation.view.dialogs.info_type import InfoType
@@ -31,9 +33,16 @@ class PlotConfigDialog(ListDialogBase[PlotGenerationConfig]):
 
     def on_confirm_clicked(self):
         self.on_close()
-        if self.on_accept:
-            self.on_accept()
-        if len(self.data) > 0:
+        if self.on_accept is not None and callable(self.on_accept):
+            cancel_button = QPushButton("Cancel")
+            cancel_button.setObjectName("light-button")
+            confirm_button = QPushButton("Continue")
+            confirm_button.setObjectName("error-button")
+            confirm_button.clicked.connect(lambda: [
+            self.parent_controller.start_computation(self.data), self.on_accept()])
+            warning_dialog = InfoPopup(self.parent_controller.current_plot_view.close_dialog, "This will overwrite any existing plots and recalculate all algorithms", InfoType.WARNING, [cancel_button, confirm_button])
+            self.parent_controller.current_plot_view.open_dialog(warning_dialog)
+        elif len(self.data) > 0:
             self.parent_controller.start_computation(self.data)
 
     def get_title(self, item: PlotGenerationConfig) -> str:
