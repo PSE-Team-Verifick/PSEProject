@@ -12,6 +12,9 @@ from nn_verification_visualisation.view.plot_view.plot_view import PlotView
 
 
 class BaseView(QWidget):
+    """
+    Class representing a base view of the application.
+    """
     active_view: InsertView
     plot_view: PlotView
     network_view: NetworkView
@@ -49,6 +52,9 @@ class BaseView(QWidget):
         SettingsDialog.add_setting(SettingsOption("High Contrast", self.get_high_contrast_changer, "Appearance"))
 
     def change_active_view(self):
+        """
+        Change active view (network <-> plot).
+        """
         old_view = self.active_view
         old_view.setUpdatesEnabled(False)
         if self.active_view is self.network_view:
@@ -81,6 +87,9 @@ class BaseView(QWidget):
 
 
     def change_color_scheme(self, index: int):
+        """
+        Change color scheme.
+        """
         color_scheme = Qt.ColorScheme.Dark
         match index:
             case 0:
@@ -113,6 +122,9 @@ class BaseView(QWidget):
 
 
     def change_contrast_mode(self, index: int):
+        """
+        Change contrast mode.
+        """
         contrast_mode = Qt.ContrastPreference.NoPreference
         match index:
             case 0:

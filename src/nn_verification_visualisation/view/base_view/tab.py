@@ -3,6 +3,9 @@ from PySide6.QtCore import Qt, QTimer
 
 
 class Tab(QWidget):
+    """
+    Class for Tab widget.
+    """
     title: str
     icon: str | None
 

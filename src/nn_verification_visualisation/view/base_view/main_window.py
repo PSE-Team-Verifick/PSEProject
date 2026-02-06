@@ -11,6 +11,9 @@ from nn_verification_visualisation.view.dialogs.info_type import InfoType
 
 
 class MainWindow(QMainWindow):
+    """
+    Class for main window.
+    """
     base_view: BaseView
     __WINDOW_TITLE: str = "PSE Neuron App"
 
@@ -27,6 +30,9 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.base_view)
 
     def closeEvent(self, event):
+        """
+        Method for close window.
+        """
         if self.exit_confirmed:
             event.accept()
             return
@@ -48,6 +54,9 @@ class MainWindow(QMainWindow):
         self.base_view.active_view.open_dialog(dialog)
 
     def __confirmed_exit(self):
+        """
+        Method for confirmed exit.
+        """
         self.exit_confirmed = True
         self.base_view.active_view.close_dialog()
         self.close()

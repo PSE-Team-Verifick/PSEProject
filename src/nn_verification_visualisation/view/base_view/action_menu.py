@@ -19,6 +19,9 @@ if TYPE_CHECKING:
 
 
 class ActionMenu(QWidget):
+    """
+    Class representing an action menu.
+    """
 
     def __init__(self, parent: InsertView):
         super().__init__()

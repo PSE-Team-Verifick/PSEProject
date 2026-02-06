@@ -10,9 +10,9 @@ from nn_verification_visualisation.view.base_view.tab import Tab
 class Tabs(QTabWidget):
 
     def __init__(self, on_close: Callable[[int], None] = None, empty_page: QWidget = None):
-        '''
+        """
         :param on_close: callback to prevent tabs from being closed instantly (i.e. to add a confirm dialog)
-        '''
+        """
         super().__init__()
 
         # close tabs instantly if not defined otherwise
@@ -59,10 +59,10 @@ class Tabs(QTabWidget):
             self.setCurrentWidget(self.empty_page)
 
     def add_tab(self, tab: Tab, add_silent: bool = False):
-        '''
+        """
         Adds a new tab to the tab bar and avoids conflicts with the default tab.
         :param tab: tab to add to the QTabWidget
-        '''
+        """
         if self.has_empty_page and self.count() == 1 and self.widget(0) is self.empty_page:
             self.removeTab(0)
 

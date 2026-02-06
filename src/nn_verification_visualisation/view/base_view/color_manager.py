@@ -8,11 +8,11 @@ from PySide6.QtCore import Qt, QFile, QIODevice
 
 
 class ColorManager:
-    '''
+    """
     Manages the theme switch between the network view and the plot view. Stores the color and font data for both themes.
     Works by reading the stylesheet from disk and replacing its colors with the colors of the active theme.
     Sets a new stylesheet at every theme change.
-    '''
+    """
     app: QApplication
     raw_stylesheet: str
 
@@ -63,12 +63,12 @@ class ColorManager:
         file.close()
 
     def set_colors(self, colors: dict[str, str]):
-        '''
+        """
         Changes the color theme of the application. A new stylesheet gets created from self.raw_stylesheet by replacing its colors.
         The QPalette of the app is changed to update the colors of all default QWidgets.
         :param colors:
         :return:
-        '''
+        """
 
         # Replace colors of style sheet
         stylesheet = self.raw_stylesheet
@@ -100,8 +100,14 @@ class ColorManager:
         self.app.styleHints().accessibility().contrastPreferenceChanged.connect(lambda contrast: self.update_accessibility(contrast))
 
     def update_colors(self):
+        """
+        Updates colors.
+        """
         style_hints = self.app.styleHints()
         color_scheme = style_hints.colorScheme()
 
     def update_accessibility(self, contrast: Qt.ContrastPreference):
+        """
+        Updates accessibility mode.
+        """
         pass

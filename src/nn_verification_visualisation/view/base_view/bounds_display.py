@@ -7,6 +7,9 @@ from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QScro
 
 
 class BoundsDisplayWidget(QGroupBox):
+    """
+    Widget for displaying bounds values.
+    """
     def __init__(
         self,
         title: str = "Bounds",
@@ -43,6 +46,9 @@ class BoundsDisplayWidget(QGroupBox):
             container.addWidget(self._content)
 
     def set_rows(self, count: int, *, index_label_width: int | None = None):
+        """
+        Sets amount of rows
+        """
         self._clear_rows()
         for i in range(count):
             row = QHBoxLayout()
@@ -65,6 +71,9 @@ class BoundsDisplayWidget(QGroupBox):
             self._content_layout.addStretch(1)
 
     def set_values(self, values: Iterable[tuple[float, float]] | None):
+        """
+        Sets given bounds values in the widget.
+        """
         if values is None:
             for _, min_label, max_label in self._rows:
                 min_label.setText("—")
@@ -80,6 +89,9 @@ class BoundsDisplayWidget(QGroupBox):
                 max_label.setText("—")
 
     def _clear_rows(self):
+        """
+        Clears rows
+        """
         while self._content_layout.count():
             item = self._content_layout.takeAt(0)
             widget = item.widget()

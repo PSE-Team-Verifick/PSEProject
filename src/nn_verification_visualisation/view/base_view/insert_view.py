@@ -13,6 +13,9 @@ from nn_verification_visualisation.model.data.storage import Storage
 
 
 class InsertView(QWidget):
+    """
+    General class for NetworkView and PlotView
+    """
     tabs: Tabs
     action_menu: ActionMenu | None
     action_menu_open: bool = False
@@ -56,12 +59,12 @@ class InsertView(QWidget):
         return None
 
     def _create_simple_icon_button(self, on_click: Callable[[], None], icon: str) -> QPushButton:
-        '''
+        """
         Creates a simple icon button with default parameters.
         :param on_click: function to be called on click
         :param icon: the asset path of the icon
         :return: the newly created button
-        '''
+        """
         button = QPushButton()
         button.setObjectName("icon-button")
         button.clicked.connect(on_click)
@@ -70,12 +73,12 @@ class InsertView(QWidget):
         return button
 
     def set_bar_corner_widgets(self, widgets: List[QWidget], corner: Qt.Corner, width: int = 40):
-        '''
+        """
         Adds a list of QWidgets to a corner of the TabBar.
         :param width: width of the widget list
         :param corner: position of the button
         :return: the new button
-        '''
+        """
 
         container = QWidget()
         container.sizeHint = lambda: QSize(width, self.tabs.tabBar().height())
@@ -89,6 +92,10 @@ class InsertView(QWidget):
         self.tabs.setCornerWidget(container, corner)
 
     def close_tab(self, index: int):
+        """
+        Closes the tab.
+        :param index: index of the tab.
+        """
         # If the tab widget has diagram_config (PlotPage), remove it from Storage().diagrams
         w = self.tabs.widget(index)
         diagram = getattr(w, "diagram_config", None)
@@ -100,10 +107,10 @@ class InsertView(QWidget):
         self.tabs.close_tab(index)
 
     def open_dialog(self, dialog: DialogBase):
-        '''
+        """
         Opens a new dialog
         :param dialog:  to be opened
-        '''
+        """
         self.__dialog_stack.append(dialog)
 
         dialog.setParent(self)
@@ -111,10 +118,10 @@ class InsertView(QWidget):
         dialog.setGeometry(self.rect())
 
     def close_dialog(self) -> bool:
-        '''
+        """
         Closes the current dialog by removing it from the stack
         :return: if the removal was successful
-        '''
+        """
         if len(self.__dialog_stack) <= 0:
             return False
 
