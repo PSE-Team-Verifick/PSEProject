@@ -9,6 +9,7 @@ from nn_verification_visualisation.model.data.diagram_config import DiagramConfi
 from nn_verification_visualisation.view.base_view.insert_view import InsertView
 from nn_verification_visualisation.view.dialogs.settings_dialog import SettingsDialog
 from nn_verification_visualisation.view.dialogs.settings_option import SettingsOption
+from nn_verification_visualisation.view.plot_view.comparison_loading_widget import ComparisonLoadingWidget
 from nn_verification_visualisation.view.plot_view.plot_page import PlotPage
 from nn_verification_visualisation.model.data.storage import Storage
 
