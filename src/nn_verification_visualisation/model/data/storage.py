@@ -21,11 +21,15 @@ class Storage(metaclass=SingletonMeta):
     algorithms: List[Algorithm]
     algorithm_change_listeners: List[Callable[[], None]]
 
+    num_directions: int
+
     def __init__(self):
         self.networks = []
         self.diagrams = []
         self.algorithms = []
         self.algorithm_change_listeners = []
+
+        self.num_directions = 32
 
         # --- SaveState integration ---
         self._save_state_path = str(Path.home() / ".nn_verification_visualisation" / "save_state.json")

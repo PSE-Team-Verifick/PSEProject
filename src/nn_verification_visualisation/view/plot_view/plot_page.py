@@ -269,10 +269,12 @@ class PlotPage(Tab):
         return super().eventFilter(watched, event)
 
     def showEvent(self, event):
+        super().showEvent(event)
         self.setting_remover = SettingsDialog.add_setting(
             SettingsOption("Plot Card Size", self.get_card_size_changer, "Plot View"))
 
     def hideEvent(self, event, /):
+        super().hideEvent(event)
         if self.setting_remover:
             self.setting_remover()
             self.setting_remover = None

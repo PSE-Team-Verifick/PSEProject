@@ -22,7 +22,7 @@ class AlgorithmFileObserver(FileSystemEventHandler):
         self.watch_dir = (current_dir.parents[3] / "algorithms")
 
         if not self.watch_dir.exists():
-            logger.error(f"Could not find algorithm directory at: {self.watch_dir}")
+            self.logger.error(f"Could not find algorithm directory at: {self.watch_dir}")
             print(f"Could not find algorithm directory at: {self.watch_dir}")
             return
 
@@ -57,7 +57,7 @@ class AlgorithmFileObserver(FileSystemEventHandler):
 
         new_algorithm_res = AlgorithmLoader.load_algorithm(event.src_path)
         if new_algorithm_res.error:
-            logger.error(f"Failed to load algorithm: {new_algorithm_res.error}")
+            self.logger.error(f"Failed to load algorithm: {new_algorithm_res.error}")
             print(f"Failed to load algorithm: {new_algorithm_res.error}")
             return
 
