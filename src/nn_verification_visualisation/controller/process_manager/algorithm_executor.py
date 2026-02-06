@@ -7,6 +7,7 @@ import numpy as np
 
 from nn_verification_visualisation.controller.process_manager.network_modifier import NetworkModifier
 from nn_verification_visualisation.model.data.plot_generation_config import PlotGenerationConfig
+from nn_verification_visualisation.model.data.storage import Storage
 from nn_verification_visualisation.model.data_loader.algorithm_loader import AlgorithmLoader
 from nn_verification_visualisation.utils.result import Result, Success, Failure
 
@@ -23,7 +24,7 @@ class AlgorithmExecutor:
             fn_res = AlgorithmLoader.load_calculate_output_bounds(config.algorithm.path)
             if not fn_res.is_success:
                 raise fn_res.error
-            directions = AlgorithmExecutor.calculate_directions(self,2)
+            directions = AlgorithmExecutor.calculate_directions(self,Storage().num_directions)
             modified_model = NetworkModifier.custom_output_layer(NetworkModifier(), model, config.selected_neurons, directions)
             output_bounds = fn_res.data(modified_model, input_bounds)
             return Success((output_bounds, directions))
