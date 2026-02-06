@@ -58,7 +58,7 @@ class AlgorithmFileObserver(FileSystemEventHandler):
 
         new_algorithm_res = AlgorithmLoader.load_algorithm(event.src_path)
         if new_algorithm_res.error:
-            self.logger.error(f"Failed to load algorithm: {new_algorithm_res.error}")
+            logger.error(f"Failed to load algorithm: {new_algorithm_res.error}")
             print(f"Failed to load algorithm: {new_algorithm_res.error}")
             return
 
