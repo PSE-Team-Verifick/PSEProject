@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from logging import Logger
 import threading
+from time import sleep
 from typing import TYPE_CHECKING
 
+from PySide6.QtCore import QTimer, SignalInstance, QMetaObject, Qt
 from onnx import ModelProto
 
 import numpy as np
@@ -18,17 +20,19 @@ from nn_verification_visualisation.model.data.storage import Storage
 from nn_verification_visualisation.utils.result import Result, Failure, Success
 from nn_verification_visualisation.view.dialogs.plot_config_dialog import PlotConfigDialog
 from nn_verification_visualisation.view.plot_view.comparison_loading_widget import ComparisonLoadingWidget
+from nn_verification_visualisation.view.plot_view.plot_page import PlotPage
+from nn_verification_visualisation.view.plot_view.status import Status
 
 if TYPE_CHECKING:
     from nn_verification_visualisation.view.plot_view.plot_view import PlotView
 
 
 def execute_algorithm_wrapper(index, queue, model: ModelProto, input_bounds: np.ndarray, algorithm_path: str,
-                          selected_neurons: list[tuple[int, int]]) -> None:
+                              selected_neurons: list[tuple[int, int]]) -> None:
     try:
         executor = AlgorithmExecutor()
         execution_res = executor.execute_algorithm(model, input_bounds, algorithm_path,
-                          selected_neurons)
+                                                   selected_neurons)
 
         if not execution_res.is_success:
             queue.put((index, Failure(execution_res.error)))
@@ -69,7 +73,7 @@ class PlotViewController:
         self.node_pair_colors = []
         self.diagram_selections = {}
 
-        #start listening for algorithm changes
+        # start listening for algorithm changes
         AlgorithmFileObserver()
 
     def change_plot(self, plot_index: int | str, add: bool, pair_index: int):
@@ -96,7 +100,7 @@ class PlotViewController:
         result_queue = Queue()
         algorithm_processes: list[Process | None] = []
 
-        diagram_config = DiagramConfig(plot_generation_configs,polygons)
+        diagram_config = DiagramConfig(plot_generation_configs, polygons)
 
         def terminate_algorithm_process(process_index: int) -> bool:
             if process_index >= len(algorithm_processes) or not algorithm_processes[process_index]:
@@ -121,6 +125,8 @@ class PlotViewController:
                 # wait for a result from the queue
                 result_index, result = result_queue.get()
 
+                print(f"RESULT: {result_index}: {result.is_success}")
+
                 if result.is_success:
                     bounds_list, directions_list = result.data
 
@@ -129,11 +135,12 @@ class PlotViewController:
                     logger.error(f"Algorithm {index} failed: {result.error}")
 
                 results_received += 1
+                QTimer.singleShot(0, loading_screen, lambda: loading_screen.loading_updated(index, result))
 
+            sleep(1)
+            loading_screen.loading_finished()
             logger.info("All computations finished/cancelled.")
-            storage = Storage()
-            storage.diagrams.append(diagram_config)
-            storage.request_autosave()
+
 
             print(f"Done: {results_received}/{total_tasks}, \n Polygons {str(polygons)}")
 
@@ -144,19 +151,36 @@ class PlotViewController:
             algorithm_path: str = plot_generation_config.algorithm.path
             selected_neurons: list[tuple[int, int]] = plot_generation_config.selected_neurons
 
-            new_process = Process(target=execute_algorithm_wrapper, args=(index, result_queue, model, input_bounds, algorithm_path, selected_neurons),)
+            new_process = Process(target=execute_algorithm_wrapper,
+                                  args=(index, result_queue, model, input_bounds, algorithm_path, selected_neurons), )
             algorithm_processes.append(new_process)
             new_process.start()
+
+        loading_screen = ComparisonLoadingWidget(diagram_config, self, terminate_algorithm_process)
 
         listener = threading.Thread(target=result_listener)
         listener.daemon = True
         listener.start()
 
-        loading_screen = ComparisonLoadingWidget(diagram_config, terminate_algorithm_process)
         self.current_plot_view.add_loading_tab(loading_screen)
 
-    def change_tab(self, index: int):
-        pass
+    def create_diagram_tab(self, base: ComparisonLoadingWidget):
+        # remove failed algorithms from diagram config:
+        diagram_config = base.diagram_config
+        for i in range(len(diagram_config.polygons) - 1, -1, -1):
+            if diagram_config.polygons[i] is None:
+                diagram_config.polygons.pop(i)
+                diagram_config.plot_generation_configs.pop(i)
+
+        # add to storage
+        storage = Storage()
+        storage.diagrams.append(diagram_config)
+        storage.request_autosave()
+
+        # replace ComparisonLoadingWidget-Tab with PlotPage-Tab
+        tab_index = self.current_plot_view.tabs.indexOf(base)
+        self.current_plot_view.tabs.close_tab(tab_index)
+        self.current_plot_view.tabs.add_tab(PlotPage(self, diagram_config), index=tab_index)
 
     def open_plot_generation_dialog(self):
         dialog = PlotConfigDialog(self)
@@ -165,31 +189,9 @@ class PlotViewController:
     def set_card_size(self, value: int):
         self.card_size = value
 
-    def register_plot(self, title: str):
-        if title in self.plot_titles:
-            return
-        self.plot_titles.append(title)
-        self.diagram_selections.setdefault(title, set())
-
-    def remove_plot(self, title: str):
-        if title in self.plot_titles:
-            self.plot_titles.remove(title)
-        self.diagram_selections.pop(title, None)
-    def get_node_pairs(self) -> list[str]:
-        return list(self.node_pairs)
-
-    def get_node_pair_bounds(self, index: int) -> list[tuple[tuple[float, float], tuple[float, float]]]:
-        return self.node_pair_bounds[index]
-
-    def get_node_pair_colors(self, index: int) -> tuple[str, str]:
-        return self.node_pair_colors[index]
-
-    def get_selection(self, title: str) -> set[int]:
-        return set(self.diagram_selections.get(title, set()))
-
-
     def compute_polygon(
-        self, bounds: list[tuple[float, float]], directions: list[tuple[float, float]]) -> list[tuple[float, float]]:
+            self, bounds: list[tuple[float, float]], directions: list[tuple[float, float]]) -> list[
+        tuple[float, float]]:
         def clip_polygon(poly: list[tuple[float, float]], a: float, b: float, c: float):
             def inside(p: tuple[float, float]) -> bool:
                 return a * p[0] + b * p[1] <= c + 1e-9
@@ -224,7 +226,7 @@ class PlotViewController:
         poly: list[tuple[float, float]] = [(-m, -m), (m, -m), (m, m), (-m, m)]
 
         for i, (low, high) in enumerate(bounds):
-            a,b = directions[i]
+            a, b = directions[i]
             poly = clip_polygon(poly, a, b, high)
             if not poly:
                 break

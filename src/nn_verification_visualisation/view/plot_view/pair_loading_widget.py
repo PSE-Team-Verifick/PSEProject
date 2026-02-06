@@ -9,6 +9,10 @@ class PairLoadingWidget(QFrame):
     List item that displays the status of a single running algorithm.
     Shows the name of the neuron pair, a status icon and a button.
     '''
+
+    status: Status
+    error: BaseException
+
     __on_click: Callable[[], None]
     __name: str
 
@@ -27,6 +31,7 @@ class PairLoadingWidget(QFrame):
 
         self.__button = QPushButton()
         self.__button.setVisible(False)
+        self.__button.clicked.connect(self.__on_click)
 
         self.__title = QLabel(name)
 
@@ -41,9 +46,8 @@ class PairLoadingWidget(QFrame):
 
         self.setObjectName("pair-loading-container")
         self.setFixedWidth(500)
+        self.setFixedHeight(50)
         self.setLayout(container_layout)
-
-        self.set_status(Status.Ongoing)
 
     def set_status(self, status: Status):
         '''
@@ -52,6 +56,7 @@ class PairLoadingWidget(QFrame):
         :param status: new status
         '''
         self.__button.setObjectName("")
+        self.status = status
 
         match status:
             case Status.Ongoing:
@@ -70,6 +75,10 @@ class PairLoadingWidget(QFrame):
                 self.__icon.load(":assets/icons/error.svg")
                 status = "Error"
         self.__title.setText("{} - {}".format(self.__name, status))
+
+        self.__button.style().unpolish(self.__button)
+        self.__button.style().polish(self.__button)
+        self.__button.update()
 
         self.__icon.setStyleSheet("color:red")
         pass
