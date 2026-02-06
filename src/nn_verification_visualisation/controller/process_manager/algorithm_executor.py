@@ -18,22 +18,22 @@ class AlgorithmExecutor:
     """
     Class to execute algorithm.
     """
-    def execute_algorithm(self, config: PlotGenerationConfig) -> Result[tuple[np.ndarray, list[tuple[float, float]]]]:
-        """
-        Execute previously loaded and cached algorithm.
-        :param config: characteristics of algorithm.
-        :return: output_bounds, directions and result as success or failure.
-        """
+
+    def execute_algorithm(self, model: ModelProto, input_bounds: np.ndarray, algorithm_path: str,
+                          selected_neurons: list[tuple[int, int]]) -> Result[
+        tuple[np.ndarray, list[tuple[float, float]]]]:
+
         try:
             # InputBounds (QAbstractTableModel) -> np.ndarray (N, 2)
             fn_res = AlgorithmLoader.load_calculate_output_bounds(algorithm_path)
             if not fn_res.is_success:
                 raise fn_res.error
-            directions = AlgorithmExecutor.calculate_directions(self,Storage().num_directions)
-            modified_model = NetworkModifier.custom_output_layer(NetworkModifier(), model, config.selected_neurons, directions)
+            directions = AlgorithmExecutor.calculate_directions(self, Storage().num_directions)
+            modified_model = NetworkModifier.custom_output_layer(NetworkModifier(), model, selected_neurons,
+                                                                 directions)
+            onnx.save_model(modified_model, "Test_Model", "protobuf", save_as_external_data=True)
             output_bounds = fn_res.data(modified_model, input_bounds)
             return Success((output_bounds, directions))
-
         except BaseException as e:
             return Failure(e)
 
