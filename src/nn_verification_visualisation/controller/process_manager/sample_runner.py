@@ -11,6 +11,8 @@ from nn_verification_visualisation.model.data.neural_network import NeuralNetwor
 from nn_verification_visualisation.controller.process_manager.sample_metric_registry import get_metric_map
 from nn_verification_visualisation.controller.process_manager.network_modifier import NetworkModifier
 
+MAX_SAMPLES_PER_RUN = 10000
+
 
 def run_samples_for_bounds(
     network: NeuralNetwork,
@@ -22,6 +24,9 @@ def run_samples_for_bounds(
     if num_samples <= 0:
         logger.error("num_samples must be positive")
         raise ValueError("num_samples must be positive")
+    if num_samples > MAX_SAMPLES_PER_RUN:
+        logger.error("num_samples exceeds max allowed per run: %s", MAX_SAMPLES_PER_RUN)
+        raise ValueError(f"num_samples must be <= {MAX_SAMPLES_PER_RUN}")
 
 
     metric_map = get_metric_map()

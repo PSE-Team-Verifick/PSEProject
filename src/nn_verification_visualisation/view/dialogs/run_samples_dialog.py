@@ -16,7 +16,10 @@ from PySide6.QtWidgets import (
     QProgressBar,
 )
 
-from nn_verification_visualisation.controller.process_manager.sample_runner import run_samples_for_bounds
+from nn_verification_visualisation.controller.process_manager.sample_runner import (
+    MAX_SAMPLES_PER_RUN,
+    run_samples_for_bounds,
+)
 from nn_verification_visualisation.controller.process_manager.sample_metric_registry import load_metrics
 from nn_verification_visualisation.model.data.input_bounds import InputBounds
 from nn_verification_visualisation.model.data.network_verification_config import NetworkVerificationConfig
@@ -107,7 +110,7 @@ class RunSamplesDialog(DialogBase):
         sample_row.addWidget(QLabel("Number of samples:"))
         self._samples_spin = QSpinBox()
         self._samples_spin.setMinimum(1)
-        self._samples_spin.setMaximum(100000)
+        self._samples_spin.setMaximum(MAX_SAMPLES_PER_RUN)
         self._samples_spin.setValue(100)
         sample_row.addWidget(self._samples_spin)
         sample_row.addStretch()

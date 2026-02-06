@@ -30,7 +30,7 @@ class NetworkModifier:
         for node in model.graph.node:
             if node.op_type not in activation_ops:
                 continue
-            for name in node.output:
+            for name in node.input[:1]:
                 if not name or name in existing:
                     continue
                 vi = onnx.ValueInfoProto()
