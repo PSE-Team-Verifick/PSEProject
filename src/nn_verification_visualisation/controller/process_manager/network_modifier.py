@@ -77,6 +77,7 @@ class NetworkModifier:
         model.graph.output[0].type.tensor_type.shape.dim[1].dim_value =  directions.__len__()       #modifies the output dim, so it matches with the initializers
         return model
 
+    @staticmethod
     def add_bridge_neurons(self, model: ModelProto, neurons: list[tuple[int, int]], directions: list[tuple[float, float]]) -> ModelProto:
         '''
 
@@ -121,6 +122,7 @@ class NetworkModifier:
                     model.graph.initializer[model.graph.initializer.__len__() - 2].float_data.append(direction[neuron_ind])
         return model
 
+    @staticmethod
     def create_initalizers(self, model: ModelProto, neurons: list[tuple[int, int]], directions: list[tuple[float, float]]) -> tuple[TensorProto, TensorProto]:
         '''
 
@@ -146,6 +148,7 @@ class NetworkModifier:
             new_initializer2.float_data.append(0)
         return new_initializer1, new_initializer2
 
+    @staticmethod
     def create_new_layer(self, model: ModelProto, neurons: list[tuple[int, int]], initializers: tuple[TensorProto, TensorProto]) -> NodeProto:
         '''
         :param model: the whole network
