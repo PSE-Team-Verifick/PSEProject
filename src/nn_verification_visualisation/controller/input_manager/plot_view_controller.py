@@ -135,12 +135,11 @@ class PlotViewController:
                     logger.error(f"Algorithm {index} failed: {result.error}")
 
                 results_received += 1
-                QTimer.singleShot(0, loading_screen, lambda: loading_screen.loading_updated(index, result))
+                loading_screen.on_update.emit((index, result))
 
             sleep(1)
             loading_screen.loading_finished()
             logger.info("All computations finished/cancelled.")
-
 
             print(f"Done: {results_received}/{total_tasks}, \n Polygons {str(polygons)}")
 

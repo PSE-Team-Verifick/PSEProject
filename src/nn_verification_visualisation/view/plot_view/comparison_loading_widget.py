@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List, Callable, TYPE_CHECKING
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QPushButton, QHBoxLayout
 
 if TYPE_CHECKING:
@@ -26,12 +26,18 @@ class ComparisonLoadingWidget(Tab):
 
     __controller: PlotViewController
 
+    on_update = Signal(tuple)
+
     def __init__(self, diagram_config: DiagramConfig, controller: PlotViewController, terminate_process: Callable[[int], bool]):
         self.diagram_config = diagram_config
         self.__terminate_process = terminate_process
         self.__controller = controller
 
         super().__init__(f"Loading {diagram_config.get_title()}", ":assets/icons/plot/hourglass.svg", has_sidebar=False, remove_close_button=True)
+
+        self.on_update.connect(lambda x: self.loading_updated(x[0], x[1]))
+
+        print("CREATED INSTANCE")
 
     def get_content(self) -> QWidget:
         content = QWidget()
@@ -77,12 +83,10 @@ class ComparisonLoadingWidget(Tab):
         self.__controller.create_diagram_tab(self)
 
     def loading_updated(self, index: int, result: Result):
-        print("CALLED")
         loader = self.__loaders[index]
         loader.set_status(Status.Done if result.is_success else Status.Failed)
         if not result.is_success:
             loader.error = result.error
-        pass
 
     def loading_finished(self):
         self.__create_diagram_button.setVisible(True)

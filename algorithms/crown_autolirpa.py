@@ -36,5 +36,4 @@ def calculate_output_bounds(onnx_model, input_bounds: np.ndarray) -> np.ndarray:
     out_lb = out_lb.reshape(-1).detach().cpu().numpy()
     out_ub = out_ub.reshape(-1).detach().cpu().numpy()
 
-    sleep(5)
     return np.stack([out_lb, out_ub], axis=1)

@@ -49,6 +49,9 @@ class PairLoadingWidget(QFrame):
         self.setFixedHeight(50)
         self.setLayout(container_layout)
 
+
+        print("CREATED PAIR")
+
     def set_status(self, status: Status):
         '''
         Function to internally and externally update the status of the widget.
@@ -67,7 +70,10 @@ class PairLoadingWidget(QFrame):
             case Status.Done:
                 self.__button.setVisible(False)
                 status = "Completed"
+                print("LOADING")
                 self.__icon.load(":assets/icons/check.svg")
+                print("LOADED")
+                self.setParent(None)
             case Status.Failed:
                 self.__button.setVisible(True)
                 self.__button.setText("Show Error")
@@ -81,4 +87,6 @@ class PairLoadingWidget(QFrame):
         self.__button.update()
 
         self.__icon.setStyleSheet("color:red")
+
+
         pass
