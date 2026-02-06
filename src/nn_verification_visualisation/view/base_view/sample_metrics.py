@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QHBoxLayout,
     QComboBox,
+    QSizePolicy,
 )
 
 from nn_verification_visualisation.controller.process_manager.sample_metric_registry import get_metric_map
@@ -41,6 +42,7 @@ class SampleMetricsWidget(QGroupBox):
         self._summary_metrics: list[str] = []
 
         self._content = QWidget()
+        self._content.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self._content_layout = QVBoxLayout(self._content)
         self._content_layout.setContentsMargins(6, 6, 6, 6)
         self._content_layout.setSpacing(6)
@@ -52,6 +54,7 @@ class SampleMetricsWidget(QGroupBox):
         self._summary_samples = QLabel("Samples: —")
         self._summary_metric_label = QLabel("Metric:")
         self._summary_metric_combo = QComboBox()
+        self._summary_metric_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._summary_metric_combo.setEnabled(False)
         self._summary_metric_combo.currentIndexChanged.connect(self._on_summary_metric_changed)
         for label in (self._summary_samples, self._summary_metric_label):
@@ -65,7 +68,7 @@ class SampleMetricsWidget(QGroupBox):
         self._summary_detail_widgets: list[QWidget] = []
 
         self._scroll_content = QWidget()
-        self._scroll_content.setMaximumWidth(320)
+        self._scroll_content.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self._scroll_layout = QVBoxLayout(self._scroll_content)
         self._scroll_layout.setContentsMargins(0, 0, 0, 0)
         self._scroll_layout.setSpacing(6)
@@ -87,6 +90,7 @@ class SampleMetricsWidget(QGroupBox):
         container.setContentsMargins(6, 6, 6, 6)
         container.setSpacing(6)
         container.addWidget(self._content)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         self.set_result(None)
 
@@ -205,7 +209,10 @@ class SampleMetricsWidget(QGroupBox):
         layout.setHorizontalSpacing(8)
         layout.setVerticalSpacing(2)
 
-        title = QLabel(f"{metric_title}:")
+        display_title = metric_title
+        if metric_key == "max" and self._detailed_labels:
+            display_title = "Maximum absolute activation"
+        title = QLabel(f"{display_title}:")
         title.setObjectName("label")
         title.setWordWrap(True)
         layout.addWidget(title, 0, 0, 1, 2)
