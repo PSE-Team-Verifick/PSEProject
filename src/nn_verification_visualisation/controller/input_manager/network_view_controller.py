@@ -207,3 +207,7 @@ class NetworkViewController:
 
     def _set_draft_bounds(self, config: NetworkVerificationConfig, bounds: list[tuple[float, float]]):
         self._draft_bounds_by_config[config] = bounds
+
+    def connect_all_bounds_autosave(self):
+        for config in Storage().networks:
+            self._connect_bounds_autosave(config)

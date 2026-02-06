@@ -41,7 +41,7 @@ def _serialize_pgc(pgc: PlotGenerationConfig, nn_index_map: Dict[int, int]) -> D
     """PlotGenerationConfig -> JSON-friendly dict."""
     nn_idx = nn_index_map.get(id(pgc.nnconfig))
     if nn_idx is None:
-        raise ValueError("PlotGenerationConfig.nnconfig is not in SaveState.loaded_networks")
+        raise ValueError("PlotGenerationConfig.nnconfig is not in exported networks")
 
     alg = pgc.algorithm
     return {
@@ -68,25 +68,40 @@ class SaveStateExporter(metaclass=SingletonMeta):
         :return: string to store as json.
         """
         try:
-            nn_index_map = {id(cfg): i for i, cfg in enumerate(save_state.loaded_networks)}
+            # Export all networks referenced by diagrams as well, even if they are
+            # not currently present in loaded_networks.
+            all_networks = list(save_state.loaded_networks)
+            known_ids = {id(cfg) for cfg in all_networks}
+            for diagram in save_state.diagrams:
+                for pgc in getattr(diagram, "plot_generation_configs", []):
+                    cfg = getattr(pgc, "nnconfig", None)
+                    if cfg is None:
+                        continue
+                    cfg_id = id(cfg)
+                    if cfg_id not in known_ids:
+                        all_networks.append(cfg)
+                        known_ids.add(cfg_id)
 
-            networks_out: List[Dict[str, Any]] = []
-            for cfg in save_state.loaded_networks:
-                networks_out.append({
-                    "network": {
-                        "name": str(cfg.network.name),
-                        "path": str(cfg.network.path),
-                    },
-                    "layers_dimensions": list(getattr(cfg, "layers_dimensions", [])),
-                    "activation_values": list(getattr(cfg, "activation_values", [])),
-                    "selected_bounds_index": int(getattr(cfg, "selected_bounds_index", -1)),
-                    "bounds": _serialize_bounds(cfg.bounds),
-                    "saved_bounds": [_serialize_bounds(b) for b in cfg.saved_bounds],
-                })
+            nn_index_map = {id(cfg): i for i, cfg in enumerate(all_networks)}
+
+            def ensure_network_index(cfg) -> int:
+                cfg_id = id(cfg)
+                idx = nn_index_map.get(cfg_id)
+                if idx is not None:
+                    return idx
+                all_networks.append(cfg)
+                idx = len(all_networks) - 1
+                nn_index_map[cfg_id] = idx
+                return idx
 
             diagrams_out: List[Dict[str, Any]] = []
             for d in save_state.diagrams:
-                pgcs = [_serialize_pgc(pgc, nn_index_map) for pgc in getattr(d, "plot_generation_configs", [])]
+                pgcs = []
+                for pgc in getattr(d, "plot_generation_configs", []):
+                    cfg = getattr(pgc, "nnconfig", None)
+                    if cfg is not None:
+                        ensure_network_index(cfg)
+                    pgcs.append(_serialize_pgc(pgc, nn_index_map))
                 polygons = [
                     [[float(x), float(y)] for (x, y) in poly]
                     for poly in getattr(d, "polygons", [])
@@ -97,6 +112,20 @@ class SaveStateExporter(metaclass=SingletonMeta):
                     "plot_generation_configs": pgcs,
                     "polygons": polygons,
                     "plots": plots,
+                })
+
+            networks_out: List[Dict[str, Any]] = []
+            for cfg in all_networks:
+                networks_out.append({
+                    "network": {
+                        "name": str(cfg.network.name),
+                        "path": str(cfg.network.path),
+                    },
+                    "layers_dimensions": list(getattr(cfg, "layers_dimensions", [])),
+                    "activation_values": list(getattr(cfg, "activation_values", [])),
+                    "selected_bounds_index": int(getattr(cfg, "selected_bounds_index", -1)),
+                    "bounds": _serialize_bounds(cfg.bounds),
+                    "saved_bounds": [_serialize_bounds(b) for b in cfg.saved_bounds],
                 })
 
             doc = {

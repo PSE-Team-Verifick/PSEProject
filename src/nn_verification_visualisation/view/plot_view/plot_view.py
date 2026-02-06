@@ -44,6 +44,11 @@ class PlotView(InsertView):
         '''
         self.tabs.add_tab(PlotPage(self.controller, diagram_config))
 
+    def reload_from_storage(self):
+        self.tabs.reset()
+        for diagram in Storage().diagrams:
+            self.add_plot_tab(diagram)
+
     def get_default_tab(self) -> QWidget | None:
         text = "1. Use the edit icon in the top right corner to add new comparisons.\n\n2. Select different neuron pairs with networks, algorithms and specific nodes.\n\n3. Let the algorithms calculate the output bounds from the given pairs.\n\n4. View the results and compare them."
         return TutorialSpeechBubble("Quick Tutorial", text)

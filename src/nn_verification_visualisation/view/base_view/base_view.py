@@ -48,3 +48,7 @@ class BaseView(QWidget):
         self.stack.setCurrentIndex(index)
         self.color_manager.set_colors(new_colors)
         self.active_view.setUpdatesEnabled(True)
+
+    def reload_from_storage(self):
+        self.network_view.reload_from_storage()
+        self.plot_view.reload_from_storage()

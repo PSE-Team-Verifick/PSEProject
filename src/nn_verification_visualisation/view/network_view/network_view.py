@@ -51,6 +51,12 @@ class NetworkView(InsertView):
         '''
         self.tabs.add_tab(NetworkPage(self.controller, network))
 
+    def reload_from_storage(self):
+        self.tabs.reset()
+        self.controller.connect_all_bounds_autosave()
+        for network in Storage().networks:
+            self.add_network_tab(network)
+
     def close_network_tab(self, index: int):
         '''
         Removes a network tab from the ui without asking the user or updating the backend. Gets called from the controller.
