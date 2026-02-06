@@ -20,19 +20,16 @@ if TYPE_CHECKING:
 class PlotViewController:
     logger = Logger(__name__)
     current_plot_view: PlotView
-    current_tab: int
     card_size: int
     plot_titles: list[str]
     diagram_selections: dict[str, set[int]]
 
     def __init__(self, current_plot_view: PlotView):
         self.current_plot_view = current_plot_view
-        self.current_tab = 0
         self.card_size = 420
         self.plot_titles = []
         self.node_pairs = []
         self.node_pair_bounds = []
-        self.node_pair_colors = []
         self.diagram_selections = {}
 
         #start listening for algorithm changes
@@ -87,6 +84,11 @@ class PlotViewController:
         dialog = PlotConfigDialog(self)
         self.current_plot_view.open_dialog(dialog)
 
+    def open_plot_generation_editing_dialog(self, configs: list[PlotGenerationConfig], plot_page):
+        close_callback = lambda: self.current_plot_view.close_tab(self.current_plot_view.tabs.indexOf(plot_page))
+        dialog = PlotConfigDialog(self, (configs, close_callback))
+        self.current_plot_view.open_dialog(dialog)
+
     def set_card_size(self, value: int):
         self.card_size = value
 
@@ -105,9 +107,6 @@ class PlotViewController:
 
     def get_node_pair_bounds(self, index: int) -> list[tuple[tuple[float, float], tuple[float, float]]]:
         return self.node_pair_bounds[index]
-
-    def get_node_pair_colors(self, index: int) -> tuple[str, str]:
-        return self.node_pair_colors[index]
 
     def get_selection(self, title: str) -> set[int]:
         return set(self.diagram_selections.get(title, set()))
