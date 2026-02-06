@@ -55,8 +55,6 @@ class PlotView(InsertView):
     def get_num_directions_changer(self) -> QWidget:
         def on_change(value):
             Storage().num_directions = value
-            print(f"Changed num directions to {value}")
-            print(changer.value())
         changer = QSpinBox()
         changer.setRange(0, 10000)
         changer.setValue(Storage().num_directions)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from logging import Logger
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from nn_verification_visualisation.utils.result import Result
 from nn_verification_visualisation.view.dialogs.info_popup import InfoPopup
@@ -15,13 +15,24 @@ if TYPE_CHECKING:
 
 class PlotConfigDialog(ListDialogBase[PlotGenerationConfig]):
     parent_controller: PlotViewController
+    on_accept: Callable[[], None] | None
 
-    def __init__(self, controller: PlotViewController):
-        super().__init__(controller.current_plot_view.close_dialog, "Create Neuron Pairs", [], True)
+    def __init__(self, controller: PlotViewController, preset: tuple[list[PlotGenerationConfig], Callable[[], None]] = None):
         self.parent_controller = controller
+
+        has_preset = preset is not None and len(preset) == 2 and callable(preset[1])
+        config = []
+        self.on_accept = None
+        if has_preset:
+            config = preset[0]
+            self.on_accept = preset[1]
+
+        super().__init__(controller.current_plot_view.close_dialog, "Create Neuron Pairs", config, True)
 
     def on_confirm_clicked(self):
         self.on_close()
+        if self.on_accept:
+            self.on_accept()
         if len(self.data) > 0:
             self.parent_controller.start_computation(self.data)
 
