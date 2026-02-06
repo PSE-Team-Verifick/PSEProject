@@ -1,0 +1,56 @@
+Errors observed
+
+1) Invalid graph in custom output node
+- Could not execute algorithm: [ONNXRuntimeError] : 10 : INVALID_GRAPH : This is an invalid model.
+- Node: ("new_output", MatMul, ...)
+- Inputs: ("old_output", "output_initializer_W", "output_initializer_B")
+- Error: Node(new_output) with schema(::MatMul:13) has input size 3 not in range [min=2, max=2].
+
+2) Corrupted protobuf tensor data
+- Could not execute algorithm: [ONNXRuntimeError] : 2 : INVALID_ARGUMENT : corrupted protobuf data: tensor shape size(...) does not match the data size(...) in proto.
+
+3) Follow-on UI crash after failed execution
+- IndexError: list index out of range
+- Trace path includes:
+  - src/nn_verification_visualisation/view/plot_view/plot_page.py:91
+  - src/nn_verification_visualisation/view/plot_view/plot_page.py:137
+  - src/nn_verification_visualisation/view/plot_view/plot_page.py:185
+- Symptom: plot selection tries to index polygons that were not produced due to algorithm failure.
+
+4) Runtime backend compatibility issue (separate from NetworkModifier logic)
+- Could not execute algorithm: [ONNXRuntimeError] : 1 : FAIL : Unsupported model IR version: 13, max supported IR version: 11.
+- Note: this is ONNX Runtime compatibility in current environment, not necessarily a graph construction bug.
+
+Recommended fixes in NetworkModifier (no code yet)
+
+1) Enforce consistent tensor storage when rewriting initializers
+- When changing initializer dims/values, clear stale storage fields:
+  - raw_data
+  - double_data
+  - int32_data
+  - int64_data
+  - uint64_data
+  - string_data
+  - etc.
+- Then populate exactly one representation (float_data for float tensors).
+- Goal: prevent shape/data-size protobuf mismatch.
+
+2) Rebuild cloned initializers cleanly in create_initalizers(...)
+- After cloning, reset all payload fields, assign new dims, and refill values from scratch.
+
+3) Normalize touched initializers after bridge edits in add_bridge_neurons(...)
+- Any initializer mutated for dims/data should be normalized to one consistent backing storage.
+
+4) Fix node semantics in create_new_layer(...)
+- Current wiring is Gemm-style (X, W, B) but node can be MatMul.
+- Choose one valid approach:
+  - Use Gemm for 3-input form, or
+  - Use MatMul(X, W) + Add(tmp, B).
+
+5) Add fast model validation
+- Run onnx.checker.check_model(modified_model) immediately after custom_output_layer(...).
+- Fail early with clear error text if invalid.
+
+6) Related UI guard (outside NetworkModifier but required)
+- If algorithm execution fails / polygons are empty, do not run selection/index logic on polygons.
+- Prevents IndexError cascade.
