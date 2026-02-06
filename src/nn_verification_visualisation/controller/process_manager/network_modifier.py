@@ -83,16 +83,16 @@ class NetworkModifier:
                                 model.graph.initializer[layer].float_data.insert(                       # adds the connections between old and new neurons
                                     (node + 1) * model.graph.initializer[layer].dims[1] - 1, 0)
                     else:
-                        for node in range(0, model.graph.initializer[layer].dims[0] - 1):
+                        for node in range(1, model.graph.initializer[layer].dims[0] - 1):
                             model.graph.initializer[layer].float_data.insert(               # adds the connections to the new neurons
                                 node * model.graph.initializer[layer].dims[1] - 1, 0)
-                        model.graph.initializer[layer].float_data.append(1)
-                    if layer != 2 * neuron[0]:
+                        model.graph.initializer[layer].float_data.append(0)
                         for node in range(1, model.graph.initializer[layer].dims[1]):
                             model.graph.initializer[layer].float_data.append(0)
+                        model.graph.initializer[layer].float_data.append(1)
                 else:
                     if layer != model.graph.initializer.__len__() - 2:
-                        model.graph.initializer[layer].float_data.append(1)
+                        model.graph.initializer[layer].float_data.append(0)
         for neuron_ind in range(0, neurons.__len__()): # changes the last initializer to match the output
             for direction in directions:
                 model.graph.initializer[model.graph.initializer.__len__() - 2].float_data.append(direction[neuron_ind])
