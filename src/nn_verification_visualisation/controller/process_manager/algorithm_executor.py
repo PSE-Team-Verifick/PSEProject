@@ -14,7 +14,6 @@ from nn_verification_visualisation.utils.result import Result, Success, Failure
 
 
 class AlgorithmExecutor:
-    logger = Logger(__name__)
     def execute_algorithm(self, config: PlotGenerationConfig) -> Result[tuple[np.ndarray, list[tuple[float, float]]]]:
 
         try:
@@ -40,6 +39,9 @@ class AlgorithmExecutor:
         bounds_model: InputBounds (QAbstractTableModel)
         Returns np.ndarray shape (N, 2) with [lower, upper].
         """
+
+        logger = Logger(__name__)
+
         raw = getattr(bounds_model, "_InputBounds__value", None)
         if raw is not None:
             return np.asarray(raw, dtype=float)

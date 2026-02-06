@@ -29,7 +29,7 @@ class Storage(metaclass=SingletonMeta):
         self.algorithms = []
         self.algorithm_change_listeners = []
 
-        self.num_directions = 2
+        self.num_directions = 32
 
         # --- SaveState integration ---
         self._save_state_path = str(Path.home() / ".nn_verification_visualisation" / "save_state.json")
