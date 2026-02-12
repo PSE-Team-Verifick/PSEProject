@@ -103,7 +103,7 @@ class NetworkViewController:
         for layer in result.data.model.graph.initializer: # adds the 1.dim of the matrix, dim of the 1. layer
             if len(layer.dims) == 2 :
                 layer_dimensions.append(layer.dims[0])
-        layer_dimensions.append(result.data.model.graph.output[0].type.tensor_type.shape.dim[1].dim_value)# adds the output layer dim
+        layer_dimensions.append(result.data.model.graph.output[0].type.tensor_type.shape.dim[-1].dim_value) # adds the output layer dim
 
         network = NetworkVerificationConfig(result.data,layer_dimensions)   #layer_dimensions is used for visualization of the network
 
